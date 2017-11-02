@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: CDFA DCSS serverless application.
+Parameters:
+  Environment:
+    Type: String
+
+Resources:
+  StatusAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub status-api-${Environment}
+      StageName: !Sub ${Environment}
+      DefinitionBody:
+        swagger: 2.0
+        info:
+          title:
+            Ref: AWS::StackName
+        paths:
+          /status/{id}:
+            get:
+              produces:
+              - "application/json"
+              parameters:
+              - name: "id"
+                in: "path"
+                required: true
+                type: "string"
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StatusFunction.Arn}/invocations
+              responses: {}
+
+  StatusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub status-func-${Environment}
+      Handler: status.handler
+      Runtime: nodejs6.10
+      Events:
+        Status:
+          Type: Api
+          Properties:
+            Path: /status/{id}
+            Method: get
+            RestApiId:
+              Ref: StatusAPI
+      Policies: AmazonDynamoDBReadOnlyAccess
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DcssTable
+
+  DcssTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        TableName: !Sub dcss-${Environment}
+
+  DelinquencyImportFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub delinquency-import-func-${Environment}
+      Handler: delinquency-import.handler
+      Runtime: nodejs6.10
+      Events:
+        DelinquencyImport:
+          Type: S3
+          Properties:
+            Bucket: !Ref DelinquencyImportBucket
+            Events: s3:ObjectCreated:*
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonDynamoDBFullAccess
+        - AmazonS3ReadOnlyAccess
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DcssTable
+
+  DelinquencyImportBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        AccessControl: PublicRead
+        BucketName:  !Sub delinquency-import-bucket-${Environment}
+
+
