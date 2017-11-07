@@ -4,6 +4,8 @@ const AWS = require('aws-sdk');
 const dynamodb = new AWS.DynamoDB();
 const s3 = new AWS.S3({apiVersion: '2006-03-01'});
 const TABLE_NAME = process.env.TABLE_NAME;
+const parser = require('./delinquency-json-transform');
+const writer = require('./delinquency-dynamodb-write');
 
 exports.handler = (event, context, callback) => {
 
@@ -19,10 +21,9 @@ exports.handler = (event, context, callback) => {
             const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
             console.log(message);
             callback(message);
-        } else {
-            console.log('CONTENT TYPE:', data.ContentType);
-            callback(null, data.ContentType);
         }
-    });
+    }).createReadStream()
+        .pipe(parser.jsonTransform)
+        .pipe(writer.writer);
 
 };

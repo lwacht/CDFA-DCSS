@@ -1,6 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
+const moment = require('moment');
 if (process.env.AWS_SAM_LOCAL) {
     AWS.config.update({
         endpoint: "http://docker.for.mac.localhost:8000"
@@ -37,6 +38,7 @@ exports.handler = (event, context, callback) => {
             callback(null, createResponse(404, "ITEM NOT FOUND"));
         } else {
             console.log('Dynamo Success: ' + JSON.stringify(data.Item, null, '  '));
+            data.Item.time = moment().format("MMM Do YY");
             callback(null, createResponse(200, JSON.stringify(data.Item)));
         }
     });

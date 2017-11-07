@@ -1,0 +1,12 @@
+1                   111220001123APPLE                    JOHN
+2                   111220002123ORANGE                   JAKE
+3                   111220003123GRAPE                    KELLY
+4                   111220004123PEAR                     JASON
+5                   111220005123LIME                     JULIE
+6                   111220006123PLUM                     JEFF
+7                   111220007123WATERMELON               CINDY
+8                   111220008123LEMON                    MATT
+9                   111220009123BANANA                   JENNY
+10                  111220010123GUAVA                    ANGELA
+
+

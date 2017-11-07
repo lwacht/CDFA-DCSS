@@ -1,0 +1,21 @@
+{
+  "name": "cdfa-dcss",
+  "jest": {
+    "verbose": true
+  },
+  "version": "1.0.0",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johntowell/cdfa-dcss.git"
+  },
+  "author": "John Towell",
+  "dependencies": {
+    "moment": "^2.19.1"
+  },
+  "devDependencies": {
+    "jest": "^21.2.1"
+  }
+}

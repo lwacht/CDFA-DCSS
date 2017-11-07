@@ -37,8 +37,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub status-func-${Environment}
-      Handler: status.handler
+      Handler: src/api/status.handler
       Runtime: nodejs6.10
+      CodeUri: ./
       Events:
         Status:
           Type: Api
@@ -70,8 +71,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub delinquency-import-func-${Environment}
-      Handler: delinquency-import.handler
+      Handler: src/import/delinquency-import.handler
       Runtime: nodejs6.10
+      CodeUri: ./
       Events:
         DelinquencyImport:
           Type: S3
