@@ -13,6 +13,7 @@
   },
   "author": "John Towell",
   "dependencies": {
+    "dynamodb-data-types": "^3.0.0",
     "moment": "^2.19.1"
   },
   "devDependencies": {
