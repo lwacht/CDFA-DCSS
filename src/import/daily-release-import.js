@@ -2,8 +2,8 @@
 
 const AWS = require('aws-sdk');
 const s3 = new AWS.S3({apiVersion: '2006-03-01'});
-const parser = require('./delinquency-json-transform');
-const writer = require('./delinquency-dynamodb-write');
+const parser = require('./daily-release-json-transform');
+const writer = require('./daily-release-dynamodb-write');
 
 exports.handler = (event, context, callback) => {
 

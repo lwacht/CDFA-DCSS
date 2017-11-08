@@ -5,7 +5,7 @@ const {Writable} = require('stream');
 const AWS = require('aws-sdk');
 const TABLE_NAME = process.env.TABLE_NAME;
 
-if (TABLE_NAME === 'dcss-local') {
+if (TABLE_NAME.startsWith('dcss-local')) {
     AWS.config.update({
         endpoint: "http://localhost:8000",
         region: 'us-west-1'
