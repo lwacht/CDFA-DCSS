@@ -5,10 +5,6 @@ const transform = require("../../src/import/daily-release-json-transform");
 const write = require("../../src/import/daily-release-dynamodb-write");
 const AWS = require('aws-sdk');
 const TABLE_NAME = process.env.TABLE_NAME;
-AWS.config.update({
-    endpoint: "http://localhost:8000",
-    region: 'us-west-1'
-});
 const dynamodb = new AWS.DynamoDB();
 
 const util = require('../util');
@@ -28,7 +24,7 @@ beforeEach(() => {
 test('update record with daily release', (done) => {
 
     fs.createReadStream("test/import/daily-release-import-test-1.txt")
-        .pipe(transform.jsonTransform)
+        .pipe(transform.jsonTransform())
         .pipe(write.writer(fileName))
         .on('finish', () => {
             util.get('1').then((data) => {

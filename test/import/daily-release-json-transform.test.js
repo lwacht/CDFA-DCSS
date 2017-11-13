@@ -13,7 +13,7 @@ const outStream = new Writable({
 test('json transformer', (done) => {
 
     fs.createReadStream("test/import/daily-release-import-test-1.txt")
-        .pipe(transform.jsonTransform)
+        .pipe(transform.jsonTransform())
         .pipe(outStream)
         .on('finish', function () {
             validate();

@@ -57,21 +57,23 @@ const dcssDelinquencyImportFormat = [
 ];
 
 module.exports = {
-    jsonTransform: new Transform({
-        objectMode: true,
-        transform(chunk, encoding, callback) {
-            let lines = chunk.toString().split(/[\r\n]+/);
-            for (let i = 0; i < lines.length; i++) {
-                let jsonLine = {};
-                for (let j = 0; j < dcssDelinquencyImportFormat.length; j++) {
-                    let format = dcssDelinquencyImportFormat[j];
-                    jsonLine[format.name] = lines[i].substring(format.start, format.end).trim();
+    jsonTransform: function() {
+        return new Transform({
+            objectMode: true,
+            transform(chunk, encoding, callback) {
+                let lines = chunk.toString().split(/[\r\n]+/);
+                for (let i = 0; i < lines.length; i++) {
+                    let jsonLine = {};
+                    for (let j = 0; j < dcssDelinquencyImportFormat.length; j++) {
+                        let format = dcssDelinquencyImportFormat[j];
+                        jsonLine[format.name] = lines[i].substring(format.start, format.end).trim();
+                    }
+                    if (jsonLine.id) {
+                        this.push(jsonLine);
+                    }
                 }
-                if (jsonLine.id) {
-                    this.push(jsonLine);
-                }
+                callback();
             }
-            callback();
-        }
-    })
+        });
+    }
 };

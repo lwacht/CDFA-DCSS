@@ -13,7 +13,7 @@ const outStream = new Writable({
 test('json transformer', (done) => {
 
     fs.createReadStream("test/import/delinquency-import-test-1.txt")
-        .pipe(transform.jsonTransform)
+        .pipe(transform.jsonTransform())
         .pipe(outStream)
         .on('finish', function () {
             validate();
@@ -23,21 +23,22 @@ test('json transformer', (done) => {
     let validate = ()=> {
         expect(output.length).toBe(1);
         let record = output[0];
+        console.log(record);
 
-        expect(record.id.S).toBe("1");
-        expect(record.ssn.S).toBe("111220001");
-        expect(record.fipsCode.S).toBe("123");
-        expect(record.lastName.S).toBe("SEED");
-        expect(record.firstName.S).toBe("JOHN");
-        expect(record.middleName.S).toBe("APPLE");
-        expect(record.address.S).toBe("123 W. 35th Street");
-        expect(record.city.S).toBe("Sacramento");
-        expect(record.state.S).toBe("CA");
-        expect(record.zip.S).toBe("95334");
-        expect(record.fourMonthFlag.BOOL).toBe(false);
-        expect(record.birthDate.S).toBe("11131973");
-        expect(record.stateIdNumber.S).toBe("D1234567");
-        expect(record.stateIdState.S).toBe("CA");
+        expect(record.id).toBe("1");
+        expect(record.ssn).toBe("111220001");
+        expect(record.fipsCode).toBe("123");
+        expect(record.lastName).toBe("SEED");
+        expect(record.firstName).toBe("JOHN");
+        expect(record.middleName).toBe("APPLE");
+        expect(record.address).toBe("123 W. 35th Street");
+        expect(record.city).toBe("Sacramento");
+        expect(record.state).toBe("CA");
+        expect(record.zip).toBe("95334");
+        expect(record.fourMonthFlag).toBe(false);
+        expect(record.birthDate).toBe("11131973");
+        expect(record.stateIdNumber).toBe("D1234567");
+        expect(record.stateIdState).toBe("CA");
     };
 });
 

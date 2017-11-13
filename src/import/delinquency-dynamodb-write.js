@@ -1,16 +1,14 @@
 /**
  * Writes the json data to DynamoDB
  */
+const attr = require('dynamodb-data-types').AttributeValue;
 const {Writable} = require('stream');
 const AWS = require('aws-sdk');
 const TABLE_NAME = process.env.TABLE_NAME;
-
-if (TABLE_NAME.startsWith('dcss-local')) {
-    AWS.config.update({
-        endpoint: "http://localhost:8000",
-        region: 'us-west-1'
-    });
-}
+const region = process.env.AWSREGION || 'us-west-1';
+AWS.config.update({
+    region: region
+});
 const dynamodb = new AWS.DynamoDB();
 
 module.exports = {
@@ -18,10 +16,9 @@ module.exports = {
         return new Writable({
             objectMode: true,
             write(chunk, encoding, callback) {
-                console.log(chunk);
                 let record = {
-                    id: chunk.id,
-                    participant: chunk,
+                    id: {S:chunk.id},
+                    participant: attr.wrap(chunk),
                     delinquent: {BOOL: true}
                 };
                 delete record.participant.id;

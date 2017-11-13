@@ -1,11 +1,11 @@
 /**
  * Transforms DCSS delinquency import fixed width into JSON.
  */
-const { Transform } = require('stream');
+const {Transform} = require('stream');
 
 const dcssDelinquencyImportFormat = [
     {
-        name:"id",
+        name: "id",
         start: 0,
         end: 20
     },
@@ -77,30 +77,28 @@ const dcssDelinquencyImportFormat = [
 ];
 
 module.exports = {
-    jsonTransform: new Transform({
-        objectMode: true,
-        transform(chunk, encoding, callback) {
-            let lines = chunk.toString().split(/[\r\n]+/);
-            for (let i = 0; i < lines.length; i++) {
-                let jsonLine = {};
-                for(let j = 0; j < dcssDelinquencyImportFormat.length; j++) {
-                    let format = dcssDelinquencyImportFormat[j];
-                    let value = lines[i].substring(format.start, format.end).trim();
-                    if(format.name === 'fourMonthFlag') {
-                        jsonLine[format.name] = {
-                            BOOL: value === 'X'
-                        };
-                    } else {
-                        jsonLine[format.name] = {
-                            S: value
-                        };
+    jsonTransform: function() {
+        return new Transform({
+            objectMode: true,
+            transform(chunk, encoding, callback) {
+                let lines = chunk.toString().split(/[\r\n]+/);
+                for (let i = 0; i < lines.length; i++) {
+                    let jsonLine = {};
+                    for (let j = 0; j < dcssDelinquencyImportFormat.length; j++) {
+                        let format = dcssDelinquencyImportFormat[j];
+                        let value = lines[i].substring(format.start, format.end).trim();
+                        if (format.name === 'fourMonthFlag') {
+                            jsonLine[format.name] = value === 'X';
+                        } else {
+                            jsonLine[format.name] = value;
+                        }
+                    }
+                    if (jsonLine.id) {
+                        this.push(jsonLine);
                     }
                 }
-                if(jsonLine.id.S) {
-                    this.push(jsonLine);
-                }
+                callback();
             }
-            callback();
-        }
-    })
+        });
+    }
 };

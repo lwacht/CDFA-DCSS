@@ -1,9 +1,9 @@
 const TEST_TABLE_NAME = 'dcss-local-test';
 const AWS = require('aws-sdk');
 const attr = require('dynamodb-data-types').AttributeValue;
+const region = process.env.AWSREGION || 'us-west-1';
 AWS.config.update({
-    endpoint: "http://localhost:8000",
-    region: 'us-west-1'
+    region: region
 });
 const dynamodb = new AWS.DynamoDB();
 
