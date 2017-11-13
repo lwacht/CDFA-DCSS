@@ -1,5 +1,5 @@
 const fs = require('fs');
-const transform = require("../../src/import/daily-release-json-transform");
+const jsonTransform = require("../../src/import/daily-release-json-transform");
 const {Writable} = require('stream');
 const output = [];
 const outStream = new Writable({
@@ -13,7 +13,7 @@ const outStream = new Writable({
 test('json transformer', (done) => {
 
     fs.createReadStream("test/import/daily-release-import-test-1.txt")
-        .pipe(transform.jsonTransform())
+        .pipe(jsonTransform.transform())
         .pipe(outStream)
         .on('finish', function () {
             validate();

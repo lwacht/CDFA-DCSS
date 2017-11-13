@@ -1,6 +1,6 @@
 const fs = require('fs');
-const transform = require("../../src/import/delinquency-json-transform");
-const { Writable } = require('stream');
+const jsonTransform = require("../../src/import/delinquency-json-transform");
+const {Writable} = require('stream');
 const output = [];
 const outStream = new Writable({
     objectMode: true,
@@ -13,14 +13,14 @@ const outStream = new Writable({
 test('json transformer', (done) => {
 
     fs.createReadStream("test/import/delinquency-import-test-1.txt")
-        .pipe(transform.jsonTransform())
+        .pipe(jsonTransform.transform())
         .pipe(outStream)
         .on('finish', function () {
             validate();
             done();
         });
 
-    let validate = ()=> {
+    let validate = () => {
         expect(output.length).toBe(1);
         let record = output[0];
         console.log(record);

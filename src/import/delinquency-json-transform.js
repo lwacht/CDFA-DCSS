@@ -77,7 +77,7 @@ const dcssDelinquencyImportFormat = [
 ];
 
 module.exports = {
-    jsonTransform: function() {
+    transform: function () {
         return new Transform({
             objectMode: true,
             transform(chunk, encoding, callback) {

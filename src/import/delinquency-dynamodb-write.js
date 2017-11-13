@@ -12,22 +12,21 @@ AWS.config.update({
 const dynamodb = new AWS.DynamoDB();
 
 module.exports = {
-    writer: function(fileName) {
+    writer: function (fileName) {
         return new Writable({
             objectMode: true,
             write(chunk, encoding, callback) {
                 let record = {
-                    id: {S:chunk.id},
+                    id: {S: chunk.id},
                     participant: attr.wrap(chunk),
                     delinquent: {BOOL: true}
                 };
                 delete record.participant.id;
-                addUpdateItem(record)
-                    .then(updateFileDate.bind(null, record, fileName))
-                    .then(function () {
+                addUpdateItem(record, fileName)
+                    .then(() => {
                         callback();
                     })
-                    .catch(function (err) {
+                    .catch((err) => {
                         console.log(err);
                         callback(err);
                     });
@@ -41,48 +40,28 @@ module.exports = {
  *
  * Returns a promise.
  */
-function addUpdateItem(item) {
+function addUpdateItem(item, fileName) {
     let id = item.id;
     let params = {
         ExpressionAttributeNames: {
             "#P": "participant",
-            "#D": "delinquent"
+            "#D": "delinquent",
+            "#DFD": "delinquencyFileDate"
         },
         ExpressionAttributeValues: {
             ":p": {
                 M: item.participant
             },
             ":d": item.delinquent,
+            ":dfd": {
+                SS: [parseDateString(fileName)]
+            }
         },
         Key: {"id": id},
         ReturnValues: "ALL_NEW",
         TableName: TABLE_NAME,
-        UpdateExpression: "SET #D = :d, #P = :p"
+        UpdateExpression: "SET #D = :d, #P = :p ADD #DFD :dfd"
     };
-    return dynamodb.updateItem(params).promise();
-}
-
-/**
- * Updates the delinquencyFileDate string array with the date of the file passed in.
- *
- * Returns a promise
- */
-function updateFileDate(item, fileName) {
-    let params = {
-        ExpressionAttributeNames: {
-            "#D": "delinquencyFileDate"
-        },
-        ExpressionAttributeValues: {
-            ":d": {
-                SS: [parseDateString(fileName)]
-            }
-        },
-        Key: {id: item.id},
-        ReturnValues: "ALL_NEW",
-        TableName: TABLE_NAME,
-        UpdateExpression: "ADD #D :d"
-    };
-
     return dynamodb.updateItem(params).promise();
 
     /**
@@ -92,6 +71,6 @@ function updateFileDate(item, fileName) {
      */
     function parseDateString(name) {
         let underscores = name.split("_");
-        return underscores[underscores.length-1].split(".")[0];
+        return underscores[underscores.length - 1].split(".")[0];
     }
 }

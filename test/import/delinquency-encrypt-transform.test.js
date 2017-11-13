@@ -1,8 +1,8 @@
 process.env.KEY_ALIAS = 'dcss-dev';
 const fs = require('fs');
-const transform = require("../../src/import/delinquency-json-transform");
-const encrypt = require("../../src/import/delinquency-encrypt-transform");
-const { Writable } = require('stream');
+const jsonTransform = require("../../src/import/delinquency-json-transform");
+const encryptTransform = require("../../src/import/delinquency-encrypt-transform");
+const {Writable} = require('stream');
 const output = [];
 const outStream = new Writable({
     objectMode: true,
@@ -15,15 +15,15 @@ const outStream = new Writable({
 test('encryption transformer', (done) => {
 
     fs.createReadStream("test/import/delinquency-import-test-3.txt")
-        .pipe(transform.jsonTransform())
-        .pipe(encrypt.encryptTransform('dcss-dev'))
+        .pipe(jsonTransform.transform())
+        .pipe(encryptTransform.transform('dcss-dev'))
         .pipe(outStream)
         .on('finish', function () {
             validate();
             done();
         });
 
-    let validate = ()=> {
+    let validate = () => {
         expect(output.length).toBe(3);
         let record = output[0];
         console.log(record);

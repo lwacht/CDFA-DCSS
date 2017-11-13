@@ -6,11 +6,9 @@ AWS.config.update({
 });
 const fs = require('fs');
 const attr = require('dynamodb-data-types').AttributeValue;
-const transform = require("../../src/import/delinquency-json-transform");
-const write = require("../../src/import/delinquency-dynamodb-write");
-const encrypt = require("../../src/import/delinquency-encrypt-transform");
-const TABLE_NAME = process.env.TABLE_NAME;
-const dynamodb = new AWS.DynamoDB();
+const jsonTransform = require("../../src/import/delinquency-json-transform");
+const dynamodbWriter = require("../../src/import/delinquency-dynamodb-write");
+const encryptTransform = require("../../src/import/delinquency-encrypt-transform");
 const util = require('../util');
 
 const fileName = 'SLM_Delinquency_20171108.txt';
@@ -31,8 +29,8 @@ beforeEach(() => {
 test('write to dynamodb', (done) => {
 
     fs.createReadStream("test/import/delinquency-import-test-1.txt")
-        .pipe(transform.jsonTransform())
-        .pipe(write.writer(fileName))
+        .pipe(jsonTransform.transform())
+        .pipe(dynamodbWriter.writer(fileName))
         .on('finish', () => {
             util.get('1').then((data) => {
                 validate(data.Item);
@@ -40,7 +38,7 @@ test('write to dynamodb', (done) => {
             });
         });
 
-    let validate = (data)=> {
+    let validate = (data) => {
         data = attr.unwrap(data);
         console.log(data);
         //validating hydration of data, full data map is done in transform test
@@ -54,10 +52,10 @@ test('write to dynamodb', (done) => {
 
 test('write to dynamodb with encryption', (done) => {
 
-    fs.createReadStream("test/import/delinquency-import-test-1.txt")
-        .pipe(transform.jsonTransform())
-        .pipe(encrypt.encryptTransform('dcss-dev'))
-        .pipe(write.writer(fileName))
+    fs.createReadStream("test/import/delinquency-import-test-3.txt")
+        .pipe(jsonTransform.transform())
+        .pipe(encryptTransform.transform('dcss-dev'))
+        .pipe(dynamodbWriter.writer(fileName))
         .on('finish', () => {
             util.get('1').then((data) => {
                 validate(data.Item);
@@ -65,10 +63,9 @@ test('write to dynamodb with encryption', (done) => {
             });
         });
 
-    let validate = (data)=> {
+    let validate = (data) => {
         data = attr.unwrap(data);
         console.log(data);
-        //validating hydration of data, full data map is done in transform test
         expect(data.id).toBe("1");
         expect(data.participant.firstName).not.toBe("JOHN");
         expect(data.delinquent).toBe(true);

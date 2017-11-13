@@ -1,12 +1,8 @@
 process.env.TABLE_NAME = 'dcss-local-test';
 const fs = require('fs');
 const attr = require('dynamodb-data-types').AttributeValue;
-const transform = require("../../src/import/daily-release-json-transform");
-const write = require("../../src/import/daily-release-dynamodb-write");
-const AWS = require('aws-sdk');
-const TABLE_NAME = process.env.TABLE_NAME;
-const dynamodb = new AWS.DynamoDB();
-
+const jsonTransform = require("../../src/import/daily-release-json-transform");
+const dynamodbWriter = require("../../src/import/daily-release-dynamodb-write");
 const util = require('../util');
 
 const fileName = 'SLM_Release_20171109.txt';
@@ -24,8 +20,8 @@ beforeEach(() => {
 test('update record with daily release', (done) => {
 
     fs.createReadStream("test/import/daily-release-import-test-1.txt")
-        .pipe(transform.jsonTransform())
-        .pipe(write.writer(fileName))
+        .pipe(jsonTransform.transform())
+        .pipe(dynamodbWriter.writer(fileName))
         .on('finish', () => {
             util.get('1').then((data) => {
                 validate(data.Item);

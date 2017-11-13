@@ -10,7 +10,7 @@ const crypto = require('crypto');
 const NOT_ENCRYPTED = ["id", "fourMonthFlag"];
 
 module.exports = {
-    encryptTransform: function (keyAlias) {
+    transform: function (keyAlias) {
 
 
         return new Transform({
@@ -20,7 +20,18 @@ module.exports = {
             objectMode: true,
             transform(chunk, encoding, callback) {
 
-                let thisTransform = this;
+                let encrypt = (data) => {
+                    Object.keys(data).forEach((key, index) => {
+                        if (!NOT_ENCRYPTED.includes(key)) {
+                            let cipher = crypto.createCipher('aes256', this.key);
+                            let encrypted = cipher.update(data[key], 'utf8', 'hex');
+                            encrypted += cipher.final('hex');
+                            data[key] = encrypted;
+                        }
+                    });
+                    data.cipherKey = this.cipherKey;
+                    return data;
+                };
 
                 if (!this.key) {
                     let params = {
@@ -28,12 +39,12 @@ module.exports = {
                         KeySpec: "AES_256"
                     };
                     kms.generateDataKey(params).promise()
-                        .then(function (data) {
+                        .then((data) => {
                             console.log(data);
-                            thisTransform.cipherKey = data.CiphertextBlob;
-                            thisTransform.key = data.Plaintext;
+                            this.cipherKey = data.CiphertextBlob;
+                            this.key = data.Plaintext;
 
-                            thisTransform.push(encrypt(chunk));
+                            this.push(encrypt(chunk));
                             callback();
                         })
                         .catch(function (err) {
@@ -44,22 +55,7 @@ module.exports = {
                     this.push(encrypt(chunk));
                     callback();
                 }
-
-                function encrypt(data) {
-                    Object.keys(data).forEach(function(key,index) {
-                        if(!NOT_ENCRYPTED.includes(key)) {
-                            let cipher = crypto.createCipher('aes256', thisTransform.key);
-                            let encrypted = cipher.update(data[key], 'utf8', 'hex');
-                            encrypted += cipher.final('hex');
-                            data[key] = encrypted;
-                        }
-                    });
-                    data.cipherKey = thisTransform.cipherKey;
-                    return data;
-                }
             }
         });
-
-
     }
 };
