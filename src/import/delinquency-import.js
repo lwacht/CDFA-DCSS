@@ -26,7 +26,7 @@ exports.handler = (event, context, callback) => {
         }
     }).createReadStream()
         .pipe(jsonTransform.transform())
-        .pipe(encryptTransform.transform("dcss-dev")) //TODO don't hardcode
+        .pipe(encryptTransform.transform(process.env.KEY_ALIAS, process.env.HASH_CIPHER))
         .pipe(dynamodbWriter.writer(key))
         .on('finish', () => {
             context.callbackWaitsForEmptyEventLoop = false;

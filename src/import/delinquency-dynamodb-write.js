@@ -19,9 +19,13 @@ module.exports = {
                 let record = {
                     id: {S: chunk.id},
                     participant: attr.wrap(chunk),
+                    ssnHash: {S: chunk.ssnHash},
+                    stateIdHash: {S: chunk.stateIdHash},
                     delinquent: {BOOL: true}
                 };
                 delete record.participant.id;
+                delete record.participant.ssnHash;
+                delete record.participant.stateIdHash;
                 addUpdateItem(record, fileName)
                     .then(() => {
                         callback();
@@ -46,6 +50,8 @@ function addUpdateItem(item, fileName) {
         ExpressionAttributeNames: {
             "#P": "participant",
             "#D": "delinquent",
+            "#SH": "ssnHash",
+            "#IH": "stateIdHash",
             "#DFD": "delinquencyFileDate"
         },
         ExpressionAttributeValues: {
@@ -53,6 +59,8 @@ function addUpdateItem(item, fileName) {
                 M: item.participant
             },
             ":d": item.delinquent,
+            ":sh": item.ssnHash,
+            ":ih": item.stateIdHash,
             ":dfd": {
                 SS: [parseDateString(fileName)]
             }
@@ -60,7 +68,7 @@ function addUpdateItem(item, fileName) {
         Key: {"id": id},
         ReturnValues: "ALL_NEW",
         TableName: TABLE_NAME,
-        UpdateExpression: "SET #D = :d, #P = :p ADD #DFD :dfd"
+        UpdateExpression: "SET #D = :d, #P = :p, #SH = :sh, #IH = :ih ADD #DFD :dfd"
     };
     return dynamodb.updateItem(params).promise();
 

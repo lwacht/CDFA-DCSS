@@ -12,6 +12,7 @@ const dynamodbWriter = require("../../src/import/delinquency-dynamodb-write");
 const util = require('../util');
 
 const fileName = 'SLM_Delinquency_20171108.txt';
+const hashCipherKey = 'AQICAHhleaFKj490A3xTReCG7e90PBlbXSmi+LHGQPBUn84AlgGZLr0feWnUEBbWeBDPpZ64AAAAZTBjBgkqhkiG9w0BBwagVjBUAgEAME8GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMxrpsdorixykdXL7iAgEQgCLeQc+nj2oxaYQMiw9z1uLupfgCqr8jIemgqVAclboPwEZk';
 
 beforeEach(() => {
     return util.delete('1').then(() => {
@@ -26,35 +27,11 @@ beforeEach(() => {
     });
 });
 
-test('write to dynamodb', (done) => {
-
-    fs.createReadStream("test/import/delinquency-import-test-1.txt")
-        .pipe(jsonTransform.transform())
-        .pipe(dynamodbWriter.writer(fileName))
-        .on('finish', () => {
-            util.get('1').then((data) => {
-                validate(data.Item);
-                done();
-            });
-        });
-
-    let validate = (data) => {
-        data = attr.unwrap(data);
-        console.log(data);
-        //validating hydration of data, full data map is done in transform test
-        expect(data.id).toBe("1");
-        expect(data.participant.firstName).toBe("JOHN");
-        expect(data.delinquent).toBe(true);
-        expect(data.delinquencyFileDate).toContain('20171008');
-        expect(data.delinquencyFileDate).toContain('20171108');
-    };
-});
-
 test('write to dynamodb with encryption', (done) => {
 
     fs.createReadStream("test/import/delinquency-import-test-3.txt")
         .pipe(jsonTransform.transform())
-        .pipe(encryptTransform.transform('dcss-dev'))
+        .pipe(encryptTransform.transform('dcss-dev', hashCipherKey))
         .pipe(dynamodbWriter.writer(fileName))
         .on('finish', () => {
             util.get('1').then((data) => {
@@ -71,6 +48,9 @@ test('write to dynamodb with encryption', (done) => {
         expect(data.delinquent).toBe(true);
         expect(data.delinquencyFileDate).toContain('20171008');
         expect(data.delinquencyFileDate).toContain('20171108');
+        //hashed values
+        expect(data.ssnHash).toBeDefined();
+        expect(data.stateIdHash).toBeDefined();
     };
 });
 
