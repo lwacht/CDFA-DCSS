@@ -10,6 +10,16 @@ const crypto = require('crypto');
 
 test('kms', (done) => {
 
+    const hmac = crypto.createHmac('sha256', 'a secret');
+
+    hmac.update('some data to hash');
+    console.log(hmac.digest('hex'));
+
+    const hmac2 = crypto.createHmac('sha256', 'a secret');
+
+    hmac2.update('some data to hash');
+    console.log(hmac2.digest('hex'));
+
     // let params = {
     //     KeyId: "arn:aws:kms:us-west-1:171474287834:key/901625be-f44f-4ceb-82e8-28cba9ab09c6", // The identifier of the CMK to use to encrypt the data key. You can use the key ID or Amazon Resource Name (ARN) of the CMK, or the name or ARN of an alias that refers to the CMK.
     //     KeySpec: "AES_256"// Specifies the type of data key to return.

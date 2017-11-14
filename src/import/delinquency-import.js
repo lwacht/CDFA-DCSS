@@ -1,14 +1,18 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const s3 = new AWS.S3({apiVersion: '2006-03-01'});
-const parser = require('./delinquency-json-transform');
-const writer = require('./delinquency-dynamodb-write');
+const region = process.env.AWSREGION || 'us-west-1';
+const s3 = new AWS.S3({apiVersion: '2006-03-01', region: region});
+const jsonTransform = require('./delinquency-json-transform');
+const encryptTransform = require("../../src/import/delinquency-encrypt-transform");
+const dynamodbWriter = require('./delinquency-dynamodb-write');
 
 exports.handler = (event, context, callback) => {
 
     const bucket = event.Records[0].s3.bucket.name;
     const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, ' '));
+
+    console.log(event, event.Records[0], bucket, key);
     const params = {
         Bucket: bucket,
         Key: key
@@ -21,7 +25,14 @@ exports.handler = (event, context, callback) => {
             callback(message);
         }
     }).createReadStream()
-        .pipe(parser.jsonTransform)
-        .pipe(writer.writer(key));
+        .pipe(jsonTransform.transform())
+        .pipe(encryptTransform.transform("dcss-dev")) //TODO don't hardcode
+        .pipe(dynamodbWriter.writer(key))
+        .on('finish', () => {
+            context.callbackWaitsForEmptyEventLoop = false;
+            console.log("Success");
+            context.succeed();
+            callback();
+        });
 
 };

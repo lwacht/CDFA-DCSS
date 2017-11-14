@@ -7,8 +7,8 @@ AWS.config.update({
 const fs = require('fs');
 const attr = require('dynamodb-data-types').AttributeValue;
 const jsonTransform = require("../../src/import/delinquency-json-transform");
-const dynamodbWriter = require("../../src/import/delinquency-dynamodb-write");
 const encryptTransform = require("../../src/import/delinquency-encrypt-transform");
+const dynamodbWriter = require("../../src/import/delinquency-dynamodb-write");
 const util = require('../util');
 
 const fileName = 'SLM_Delinquency_20171108.txt';
