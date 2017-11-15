@@ -14,6 +14,7 @@
   "author": "John Towell",
   "dependencies": {
     "dynamodb-data-types": "^3.0.0",
+    "levenshtein": "^1.0.5",
     "moment": "^2.19.1"
   },
   "devDependencies": {

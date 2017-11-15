@@ -1,6 +1,6 @@
 1                   111220001123SEED                     JOHN                APPLE               123 W. 35th Street              Sacramento          CA95334     11131973D1234567                           CA
-2                   111220002123THOMAS                   JOE                 JIM                 123 W. 35th Street              Sacramento          CA95334     11131973D1234567                           CA
-3                   111220003123SMITH                    JAMES               ALAN                123 W. 35th Street              Sacramento          CA95334     11131973D1234567                           CA
+2                   111220002123TOM                      JOE                 JIM                 123 W. 35th Street              Sacramento          CA95334     11131973D1234567                           CA
+3                   111220001123McMurphy                 JAMES               ALAN                123 W. 35th Street              Sacramento          CA95334     11131973D1234567                           CA
 
 
 
