@@ -1,14 +1,5 @@
-'use strict';
 
-const AWS = require('aws-sdk');
-const moment = require('moment');
-if (process.env.AWS_SAM_LOCAL) {
-    AWS.config.update({
-        endpoint: "http://docker.for.mac.localhost:8000"
-    });
-}
-const dynamodb = new AWS.DynamoDB();
-const TABLE_NAME = process.env.TABLE_NAME;
+const search = require('../util/search');
 
 const createResponse = (statusCode, body) => {
 
@@ -20,26 +11,36 @@ const createResponse = (statusCode, body) => {
 
 exports.handler = (event, context, callback) => {
 
-    let id = event.pathParameters.id;
+    let ssn = event.queryStringParameters.ssn;
+    let lastName = event.queryStringParameters.lastName;
+    let stateId = event.queryStringParameters.stateId;
 
-    dynamodb.getItem({
-        TableName: TABLE_NAME,
-        Key: {
-            "id": {
-                S: id
-            }
-        }
-    }, function (err, data) {
-        if (err) {
-            console.log('ERROR: Dynamo failed: ' + err);
-            callback(null, createResponse(500, err));
-        } else if (!data.Item) {
-            console.log('Dynamo Success: no data');
-            callback(null, createResponse(404, "ITEM NOT FOUND"));
+    search.ssnSearch(ssn, lastName).then((data) => {
+        if(data !== null) {
+            let result = {
+                found: true,
+                delinquent: data.delinquent
+            };
+            callback(null, createResponse(200, JSON.stringify(result)));
         } else {
-            console.log('Dynamo Success: ' + JSON.stringify(data.Item, null, '  '));
-            data.Item.time = moment().format("MMM Do YY");
-            callback(null, createResponse(200, JSON.stringify(data.Item)));
+            return search.idSearch(stateId, lastName).then((data) => {
+                if(data !== null) {
+                    let result = {
+                        found: true,
+                        delinquent: data.delinquent
+                    };
+                    callback(null, createResponse(200, JSON.stringify(result)));
+                } else {
+                    let result = {
+                        found: false,
+                        delinquent: false
+                    };
+                    callback(null, createResponse(200, JSON.stringify(result)));
+                }
+            });
         }
+    }).catch((err) => {
+        console.log(err);
+        callback(null, createResponse(500, err));
     });
 };
