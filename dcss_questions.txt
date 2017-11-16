@@ -1,0 +1,32 @@
+  * Deliquency and Release
+
+  1) Will participants always occur in a release file when they are released? Can a participant show up in November delinquency file, and then not show up in December's without being in a release?
+
+    Assumption: Participants will always be in a release file when taken off delinquency. Therefore we don't need to compute the diff of delinquency files to find additional released participants.
+
+  * SLM Returned Match Statistics File
+
+  2) What is the format of this file in regards to the #3 SLM ACTION TYPE?
+
+   Assumption: Each line in the file represent the statistics for that specific SLM ACTION TYPE. There will be 7 lines assuming we will use each ACTION TYPE.
+
+  3) For fields #4 CUSTOMER_COUNT and #5 LICENSES PROCESSED does this include applicants who were not in the delinquency file? The interface will not have this information.
+
+   Assumption: This will only include applicants who were in the delinquency file.
+
+  4) What is the difference between fields #6 and #7? Assuming that they will both have the same returned action (DLQ, SUP, REN) they should be the same?
+
+   Assumption: I will treat these the same.
+
+  5) Fields #8, #9, #10 don't map to our process since we are using SSN, ID, and lastName. Is there a specific format for our matching?
+
+   Assumption:  I will have field #8 represent SSN + lastName match, and field #9 represent ID + lastName match and leave field #10 blank.
+
+  6) Assuming question #2 assumption is correct, what do fields #11 and #12 refer to? Wouldn't they be duplicate of fields #6 and #7 for the ACTION TYPES SUS and REL?
+
+   Assumption: This is duplicate information of fields #6 and #7 for ACTION TYPES SUS and REL. For other ACTION TYPES they will be zero.
+
+
+
+
+123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
