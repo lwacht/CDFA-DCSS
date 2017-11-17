@@ -1,6 +1,6 @@
 process.env.TABLE_NAME = 'dcss-local-test';
-process.env.HASH_CIPHER = 'AQICAHhleaFKj490A3xTReCG7e90PBlbXSmi+LHGQPBUn84AlgGZLr0feWnUEBbWeBDPpZ64AAAAZTBjBgkqhkiG9w0BBwagVjBUAgEAME8GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMxrpsdorixykdXL7iAgEQgCLeQc+nj2oxaYQMiw9z1uLupfgCqr8jIemgqVAclboPwEZk';
-process.env.KEY_ALIAS = 'dcss-dev';
+process.env.HASH_KEY = 'TESTING';
+process.env.KEY_ALIAS = 'alias/dcss-dev';
 const LambdaTester = require('lambda-tester');
 const handler = require('../../src/api/status').handler;
 const util = require('../util');
@@ -77,7 +77,7 @@ test('status api end to end test -- error param not defined', () => {
                     }
             })
         .expectResult((result) => {
-            expect(result.statusCode).toBe(500);
+            expect(result.statusCode).toBe(400);
             console.log(result);
         });
 });

@@ -1,57 +1,103 @@
 AWSTemplateFormatVersion : '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
 Description: CDFA DCSS serverless application.
 Parameters:
   Environment:
     Type: String
+  HashKey:
+    Type: String
 
 Resources:
-  StatusAPI:
-    Type: AWS::Serverless::Api
-    Properties:
-      Name: !Sub status-api-${Environment}
-      StageName: !Sub ${Environment}
-      DefinitionBody:
-        swagger: 2.0
-        info:
-          title:
-            Ref: AWS::StackName
-        paths:
-          /status/{id}:
-            get:
-              produces:
-              - "application/json"
-              parameters:
-              - name: "id"
-                in: "path"
-                required: true
-                type: "string"
-              x-amazon-apigateway-integration:
-                httpMethod: POST
-                type: aws_proxy
-                uri:
-                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StatusFunction.Arn}/invocations
-              responses: {}
 
-  StatusFunction:
-    Type: AWS::Serverless::Function
+###################################### LAMBDA FUNCTIONS ################################################################
+
+  DelinquencyImportFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub delinquency-import-func-${Environment}
+      Handler: src/import/delinquency-import.handler
+      Runtime: nodejs6.10
+      Code: ./
+      Role: !GetAtt DelinquencyImportFunctionRole.Arn
+      KmsKeyArn: !GetAtt DCSSDataKMSKey.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DcssTable
+          KEY_ALIAS: !Ref DCSSDataKMSKeyAlias
+          HASH_KEY: !Sub ${HashKey}
+
+  DelinquencyImportFunctionS3Permission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !GetAtt DelinquencyImportFunction.Arn
+        Principal: s3.amazonaws.com
+        SourceAccount: !Ref AWS::AccountId
+        SourceArn: !Sub arn:aws:s3:::delinquency-import-bucket-${Environment}
+
+  StatusAPIFunction:
+    Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub status-func-${Environment}
       Handler: src/api/status.handler
       Runtime: nodejs6.10
-      CodeUri: ./
-      Events:
-        Status:
-          Type: Api
-          Properties:
-            Path: /status/{id}
-            Method: get
-            RestApiId:
-              Ref: StatusAPI
-      Policies: AmazonDynamoDBReadOnlyAccess
+      Code: ./
+      Role: !GetAtt StatusAPIFunctionRole.Arn
+      KmsKeyArn: !GetAtt DCSSDataKMSKey.Arn
       Environment:
         Variables:
           TABLE_NAME: !Ref DcssTable
+          HASH_KEY: !Sub ${HashKey}
+
+  StatusAPIFunctionGatewayPermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !GetAtt StatusAPIFunction.Arn
+        Principal: apigateway.amazonaws.com
+        SourceArn: !Join [ "", [ "arn:aws:execute-api:", !Sub "${AWS::Region}:", !Sub "${AWS::AccountId}:", !Ref StatusAPI, "/*"] ]
+
+###################################### API GATEWAY #####################################################################
+
+  StatusAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub status-api-${Environment}
+      Description: "API used to return participant status"
+      FailOnWarnings: true
+
+  StatusAPIStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref StatusAPIDeployment
+      RestApiId: !Ref StatusAPI
+      StageName: !Sub ${Environment}
+
+  StatusAPIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: StatusAPIRequest
+    Properties:
+      RestApiId: !Ref StatusAPI
+
+  StatusAPIResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref StatusAPI
+      ParentId: !GetAtt StatusAPI.RootResourceId
+      PathPart: status
+
+  StatusAPIRequest:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: GET
+      RestApiId: !Ref StatusAPI
+      ResourceId: !Ref StatusAPIResource
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StatusAPIFunction.Arn}/invocations
+
+###################################### DYNAMODB ########################################################################
 
   DcssTable:
       Type: AWS::DynamoDB::Table
@@ -59,39 +105,185 @@ Resources:
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
+          - AttributeName: ssnHash
+            AttributeType: S
+          - AttributeName: stateIdHash
+            AttributeType: S
         KeySchema:
           - AttributeName: id
             KeyType: HASH
+        GlobalSecondaryIndexes:
+          -
+            IndexName: !Sub ssnHash-index
+            KeySchema:
+              -
+                AttributeName: ssnHash
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
+          -
+            IndexName: !Sub stateIdHash-index
+            KeySchema:
+              -
+                AttributeName: stateIdHash
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
         ProvisionedThroughput:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
-        TableName: !Sub dcss-${Environment}
 
-  DelinquencyImportFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: !Sub delinquency-import-func-${Environment}
-      Handler: src/import/delinquency-import.handler
-      Runtime: nodejs6.10
-      CodeUri: ./
-      Events:
-        DelinquencyImport:
-          Type: S3
-          Properties:
-            Bucket: !Ref DelinquencyImportBucket
-            Events: s3:ObjectCreated:*
-      Policies:
-        - AWSLambdaBasicExecutionRole
-        - AmazonDynamoDBFullAccess
-        - AmazonS3ReadOnlyAccess
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref DcssTable
+###################################### S3 BUCKETS AND EVENTS ###########################################################
 
   DelinquencyImportBucket:
       Type: AWS::S3::Bucket
+      DependsOn: DelinquencyImportFunctionS3Permission
       Properties:
-        AccessControl: PublicRead
+        AccessControl: AuthenticatedRead
         BucketName:  !Sub delinquency-import-bucket-${Environment}
+        NotificationConfiguration:
+              LambdaConfigurations:
+                -
+                  Function: !GetAtt DelinquencyImportFunction.Arn
+                  Event: "s3:ObjectCreated:*"
+
+###################################### ROLES AND POLICIES ##############################################################
+
+  DelinquencyImportFunctionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            -
+              Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action:
+                - sts:AssumeRole
+
+  StatusAPIFunctionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            -
+              Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action:
+                - sts:AssumeRole
+
+  #common re-usable policies
+
+  ReadDataOnlyPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ReadDataOnlyPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:Query
+              - dynamodb:BatchGetItem
+            Resource:
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-dev-*
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-test-*
+      Roles:
+        - !Ref StatusAPIFunctionRole
+
+  LambdaImportPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: LambdaImportPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:Query
+              - dynamodb:UpdateItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:BatchGetItem
+            Resource:
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-dev-*
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-test-*
+          -
+            Effect: Allow
+            Action:
+              - s3:Get*
+              - s3:List*
+            Resource:
+              - arn:aws:s3:::delinquency-import-bucket-dev/*
+              - arn:aws:s3:::delinquency-import-bucket-test/*
+      Roles:
+        - !Ref DelinquencyImportFunctionRole
+
+###################################### KMS #############################################################################
+
+  DCSSDataKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: 'Master key for dcss envelope data encryption'
+      KeyPolicy:
+          Version: "2012-10-17"
+          Id: !Sub ${AWS::StackName}-DCSSDataKeyPolicy
+          Statement:
+            - Sid: "Allow administration of the key only to root"
+              Effect: Allow
+              Principal:
+                #AWS: arn:aws:iam::AccountId:root
+                AWS:
+                  - !Join [ "", [ "arn:aws:iam::", !Ref "AWS::AccountId", ":root" ] ]
+                  - !Join [ "", [ "arn:aws:iam::", !Ref "AWS::AccountId", ":user/dcss-dev" ] ]
+              Resource: "*"
+              Action: kms:*
+            - Sid: "Allow access to encrypt/decrypt abilities to the lambda functions"
+              Effect: Allow
+              Principal:
+                AWS:
+                  - !GetAtt DelinquencyImportFunctionRole.Arn
+                  - !GetAtt StatusAPIFunctionRole.Arn
+              Action:
+                - kms:Encrypt
+                - kms:Decrypt
+                - kms:GenerateDataKey*
+              Resource: "*"
+
+  DCSSDataKMSKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub alias/dcss-key-${Environment}
+      TargetKeyId:
+        Ref: DCSSDataKMSKey
 
 

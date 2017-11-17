@@ -26,7 +26,7 @@ exports.handler = (event, context, callback) => {
         }
     }).createReadStream()
         .pipe(jsonTransform.transform())
-        .pipe(encryptTransform.transform(process.env.KEY_ALIAS, process.env.HASH_CIPHER))
+        .pipe(encryptTransform.transform(process.env.KEY_ALIAS, process.env.HASH_KEY))
         .pipe(dynamodbWriter.writer(key))
         .on('finish', () => {
             context.callbackWaitsForEmptyEventLoop = false;

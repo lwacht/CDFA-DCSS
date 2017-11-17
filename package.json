@@ -7,6 +7,9 @@
   "directories": {
     "test": "test"
   },
+  "scripts": {
+    "test": "jest --silent --runInBand"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/johntowell/cdfa-dcss.git"

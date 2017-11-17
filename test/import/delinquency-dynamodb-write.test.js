@@ -12,7 +12,7 @@ const dynamodbWriter = require("../../src/import/delinquency-dynamodb-write");
 const util = require('../util');
 
 const fileName = 'SLM_Delinquency_20171108.txt';
-const hashCipherKey = 'AQICAHhleaFKj490A3xTReCG7e90PBlbXSmi+LHGQPBUn84AlgGZLr0feWnUEBbWeBDPpZ64AAAAZTBjBgkqhkiG9w0BBwagVjBUAgEAME8GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMxrpsdorixykdXL7iAgEQgCLeQc+nj2oxaYQMiw9z1uLupfgCqr8jIemgqVAclboPwEZk';
+const hashKey = 'TESTING';
 
 beforeEach(() => {
     return util.delete('1').then(() => {
@@ -31,7 +31,7 @@ test('write to dynamodb with encryption', (done) => {
 
     fs.createReadStream("test/import/delinquency-import-test-3.txt")
         .pipe(jsonTransform.transform())
-        .pipe(encryptTransform.transform('dcss-dev', hashCipherKey))
+        .pipe(encryptTransform.transform('alias/dcss-dev', hashKey))
         .pipe(dynamodbWriter.writer(fileName))
         .on('finish', () => {
             util.get('1').then((data) => {

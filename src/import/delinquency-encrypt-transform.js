@@ -11,7 +11,7 @@ const crypto = require('crypto');
 const NOT_ENCRYPTED = ["id", "fourMonthFlag"];
 
 module.exports = {
-    transform: function (keyAlias, hashCipherKey) {
+    transform: function (keyAlias, hashKey) {
 
 
         return new Transform({
@@ -42,16 +42,12 @@ module.exports = {
                 };
 
                 if (!this.key) {
+                    this.hmacHash = hmacUtil.create(hashKey);
                     let params = {
-                        KeyId: "alias/" + keyAlias,
+                        KeyId: keyAlias,
                         KeySpec: "AES_256"
                     };
-                    let hmac = hmacUtil.create(hashCipherKey);
-                    hmac.init()
-                        .then(() => {
-                            this.hmacHash = hmac;
-                            return kms.generateDataKey(params).promise();
-                        })
+                    kms.generateDataKey(params).promise()
                         .then((data) => {
                             this.cipherKey = data.CiphertextBlob;
                             this.key = data.Plaintext;

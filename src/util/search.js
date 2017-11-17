@@ -69,53 +69,43 @@ let levenshtein = (decryptedData, lastName, limit) => {
 module.exports = {
     ssnSearch: function (ssn, lastName) {
         let distanceLimit = minDistance(lastName);
-        let hmac = hmacUtil.create(process.env.HASH_CIPHER);
-        return hmac
-            .init()
-            .then(() => {
-
-                let ssnHash = hmac.hash(ssn);
-                let params = {
-                    ExpressionAttributeValues: {
-                        ":sh": {
-                            S: ssnHash
-                        }
-                    },
-                    IndexName: "ssnHash-index",
-                    KeyConditionExpression: "ssnHash = :sh",
-                    Select: "ALL_ATTRIBUTES",
-                    TableName: process.env.TABLE_NAME
-                };
-
-                return dynamodb.query(params).promise();
-            })
+        let hmac = hmacUtil.create(process.env.HASH_KEY);
+        let ssnHash = hmac.hash(ssn);
+        let params = {
+            ExpressionAttributeValues: {
+                ":sh": {
+                    S: ssnHash
+                }
+            },
+            IndexName: "ssnHash-index",
+            KeyConditionExpression: "ssnHash = :sh",
+            Select: "ALL_ATTRIBUTES",
+            TableName: process.env.TABLE_NAME
+        };
+        return dynamodb.query(params).promise()
             .then(unwrapDecrypt)
             .then((decryptedData) => {
                 return levenshtein(decryptedData, lastName, distanceLimit);
             });
     },
+
     idSearch: function (stateId, lastName) {
         let distanceLimit = minDistance(lastName);
-        let hmac = hmacUtil.create(process.env.HASH_CIPHER);
-        return hmac
-            .init()
-            .then(() => {
+        let hmac = hmacUtil.create(process.env.HASH_KEY);
 
-                let stateIdHash = hmac.hash(stateId);
-                let params = {
-                    ExpressionAttributeValues: {
-                        ":sh": {
-                            S: stateIdHash
-                        }
-                    },
-                    IndexName: "stateIdHash-index",
-                    KeyConditionExpression: "stateIdHash = :sh",
-                    Select: "ALL_ATTRIBUTES",
-                    TableName: process.env.TABLE_NAME
-                };
-
-                return dynamodb.query(params).promise();
-            })
+        let stateIdHash = hmac.hash(stateId);
+        let params = {
+            ExpressionAttributeValues: {
+                ":sh": {
+                    S: stateIdHash
+                }
+            },
+            IndexName: "stateIdHash-index",
+            KeyConditionExpression: "stateIdHash = :sh",
+            Select: "ALL_ATTRIBUTES",
+            TableName: process.env.TABLE_NAME
+        };
+        return dynamodb.query(params).promise()
             .then(unwrapDecrypt)
             .then((decryptedData) => {
                 return levenshtein(decryptedData, lastName, distanceLimit);

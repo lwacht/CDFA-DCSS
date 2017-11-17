@@ -14,10 +14,6 @@ const jsonTransform = require("../src/import/delinquency-json-transform");
 const encryptTransform = require("../src/import/delinquency-encrypt-transform");
 const dynamodbWriter = require("../src/import/delinquency-dynamodb-write");
 
-const keyAlias = 'dcss-dev';
-const hashCipherKey = 'AQICAHhleaFKj490A3xTReCG7e90PBlbXSmi+LHGQPBUn84AlgGZLr0feWnUEBbWeBDPpZ64AAAAZTBjBgkqhkiG9w0BBwagVjBUAgEAME8GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMxrpsdorixykdXL7iAgEQgCLeQc+nj2oxaYQMiw9z1uLupfgCqr8jIemgqVAclboPwEZk';
-
-
 module.exports = {
     delete: function (id) {
         let params = {
@@ -49,7 +45,7 @@ module.exports = {
         return new Promise((resolve, reject) => {
             fs.createReadStream(filePath)
                 .pipe(jsonTransform.transform())
-                .pipe(encryptTransform.transform(keyAlias, hashCipherKey))
+                .pipe(encryptTransform.transform(process.env.KEY_ALIAS, process.env.HASH_KEY))
                 .pipe(dynamodbWriter.writer(filePath))
                 .on('finish', () => {
                     resolve();

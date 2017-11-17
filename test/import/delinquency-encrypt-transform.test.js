@@ -1,4 +1,4 @@
-process.env.KEY_ALIAS = 'dcss-dev';
+process.env.KEY_ALIAS = 'alias/dcss-dev';
 const fs = require('fs');
 const hmacUtil = require('../../src/util/hmac');
 const jsonTransform = require("../../src/import/delinquency-json-transform");
@@ -13,13 +13,13 @@ const outStream = new Writable({
     }
 });
 
-const hashCipherKey = 'AQICAHhleaFKj490A3xTReCG7e90PBlbXSmi+LHGQPBUn84AlgGZLr0feWnUEBbWeBDPpZ64AAAAZTBjBgkqhkiG9w0BBwagVjBUAgEAME8GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMxrpsdorixykdXL7iAgEQgCLeQc+nj2oxaYQMiw9z1uLupfgCqr8jIemgqVAclboPwEZk';
+const hashKey = 'TESTING';
 
 test('encryption transformer', (done) => {
 
     fs.createReadStream("test/import/delinquency-import-test-3.txt")
         .pipe(jsonTransform.transform())
-        .pipe(encryptTransform.transform(process.env.KEY_ALIAS, hashCipherKey))
+        .pipe(encryptTransform.transform(process.env.KEY_ALIAS, hashKey))
         .pipe(outStream)
         .on('finish', function () {
             validate();

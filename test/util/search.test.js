@@ -1,7 +1,5 @@
 process.env.TABLE_NAME = 'dcss-local-test';
-process.env.HASH_CIPHER = 'AQICAHhleaFKj490A3xTReCG7e90PBlbXSmi+LHGQPBUn84AlgGZLr0feWnUEBbWeBDPpZ64AAAAZTBjBgkqhkiG9w0BBwagVjBUAgEAME8GCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMxrpsdorixykdXL7iAgEQgCLeQc+nj2oxaYQMiw9z1uLupfgCqr8jIemgqVAclboPwEZk';
-
-const attr = require('dynamodb-data-types').AttributeValue;
+process.env.HASH_KEY = 'TESTING';
 
 const search = require('../../src/util/search');
 const util = require('../util');
