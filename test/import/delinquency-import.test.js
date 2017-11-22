@@ -18,7 +18,7 @@ test('delinquency import end to end test', (done) => {
                         configurationId: '7a28a1b7-5fc9-4214-86fe-c812624d80aa',
                         bucket:
                             {
-                                name: 'delinquency-import-bucket-dev'
+                                name: 'delinquency-import-bucket-local-test'
                             },
                         object:
                             {
@@ -27,7 +27,7 @@ test('delinquency import end to end test', (done) => {
                     }
                 }]
         })
-        .expectSucceed()
+        .expectResult()
         .verify(done);
 });
 

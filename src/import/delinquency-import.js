@@ -31,7 +31,6 @@ exports.handler = (event, context, callback) => {
         .on('finish', () => {
             context.callbackWaitsForEmptyEventLoop = false;
             console.log("Success");
-            context.succeed();
             callback();
         });
 

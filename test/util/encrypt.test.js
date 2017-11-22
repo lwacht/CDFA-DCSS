@@ -1,4 +1,6 @@
-const decryptUtil = require('../../src/util/decrypt');
+process.env.KEY_ALIAS = 'alias/dcss-local-test-key';
+
+const decryptUtil = require('../../src/util/encrypt');
 
 test('decrypt', (done) => {
     let cipherText = "AQIDAHhleaFKj490A3xTReCG7e90PBlbXSmi+LHGQPBUn84AlgHk/vkcWaAjNyIln7iRd9edAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMYzhjud0egW/8ejujAgEQgDvjHbEVgxi/AzgOc9h9JGsmkbgdkADLilHZU4Kq1jL3ai3t+aHPwRXnM+pEMIV1FDBRh0bnK0vDkx70Ew==";
@@ -27,17 +29,40 @@ test('decrypt', (done) => {
         stateIdHash: '1c3f631d3258d37bd2ee76f80e5ff3a9b6f0d10d1dd372e21c930562d7d82c8e'
     };
 
-    decryptUtil.decrypt(encryptedJSON).then((data) => {
+    decryptUtil.decrypt(encryptedJSON.participant, ["fourMonthFlag", "cipherKey"]).then((data) => {
         console.log(data);
-        expect(data.id).toBe("1");
-        expect(data.participant.ssn).toBe("111220001");
-        expect(data.participant.stateIdNumber).toBe("D1234567");
-        expect(data.participant.stateIdState).toBe("CA");
-        expect(data.participant.fipsCode).toBe("123");
-        expect(data.participant.lastName).toBe("SEED");
-        expect(data.participant.firstName).toBe("JOHN");
-        expect(data.participant.middleName).toBe("APPLE");
-        expect(data.participant.birthDate).toBe("11131973");
+        expect(data.ssn).toBe("111220001");
+        expect(data.stateIdNumber).toBe("D1234567");
+        expect(data.stateIdState).toBe("CA");
+        expect(data.fipsCode).toBe("123");
+        expect(data.lastName).toBe("SEED");
+        expect(data.firstName).toBe("JOHN");
+        expect(data.middleName).toBe("APPLE");
+        expect(data.birthDate).toBe("11131973");
+        done();
+    });
+});
+
+
+test('encrypt', (done) => {
+    let json = {
+        zip: '95691',
+        firstName: 'Johnny',
+        middleName: 'Apple',
+        lastName: 'Seed',
+        fourMonthFlag: false,
+        dontEncrypt: '42'
+    };
+
+    decryptUtil.encrypt(json, ["fourMonthFlag", "cipherKey", "dontEncrypt"]).then((data) => {
+        console.log(data);
+        expect(data.zip).not.toBe("95691");
+        expect(data.firstName).not.toBe("Johnny");
+        expect(data.middleName).not.toBe("Apple");
+        expect(data.lastName).not.toBe("Seed");
+        expect(data.fourMonthFlag).toBe(false);
+        expect(data.dontEncrypt).toBe("42");
+        expect(data.cipherKey).toBeDefined();
         done();
     });
 });

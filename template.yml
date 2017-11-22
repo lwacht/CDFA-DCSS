@@ -10,10 +10,12 @@ Resources:
 
 ###################################### LAMBDA FUNCTIONS ################################################################
 
+  #DELINQUENCY IMPORT
+
   DelinquencyImportFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub delinquency-import-func-${Environment}
+      FunctionName: !Sub dcss-${Environment}-delinquency-import-func
       Handler: src/import/delinquency-import.handler
       Runtime: nodejs6.10
       Code: ./
@@ -32,12 +34,14 @@ Resources:
         FunctionName: !GetAtt DelinquencyImportFunction.Arn
         Principal: s3.amazonaws.com
         SourceAccount: !Ref AWS::AccountId
-        SourceArn: !Sub arn:aws:s3:::delinquency-import-bucket-${Environment}
+        SourceArn: !Sub arn:aws:s3:::dcss-${Environment}-delinquency-import-bucket
+
+  #STATUS
 
   StatusAPIFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub status-func-${Environment}
+      FunctionName: !Sub dcss-${Environment}-status-func
       Handler: src/api/status.handler
       Runtime: nodejs6.10
       Code: ./
@@ -56,14 +60,44 @@ Resources:
         Principal: apigateway.amazonaws.com
         SourceArn: !Join [ "", [ "arn:aws:execute-api:", !Sub "${AWS::Region}:", !Sub "${AWS::AccountId}:", !Ref StatusAPI, "/*"] ]
 
+  #ACTION TAKEN
+
+  ActionTakenFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub dcss-${Environment}-action-taken-func
+      Handler: src/api/action-taken.handler
+      Runtime: nodejs6.10
+      Code: ./
+      Role: !GetAtt ActionTakenFunctionRole.Arn
+      KmsKeyArn: !GetAtt DCSSDataKMSKey.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DcssTable
+          ACTION_TABLE_NAME: !Ref ActionTakenTable
+          HASH_KEY: !Sub ${HashKey}
+          KEY_ALIAS: !Ref DCSSDataKMSKeyAlias
+
+  ActionTakenFunctionGatewayPermission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !GetAtt ActionTakenFunction.Arn
+        Principal: apigateway.amazonaws.com
+        SourceArn: !Join [ "", [ "arn:aws:execute-api:", !Sub "${AWS::Region}:", !Sub "${AWS::AccountId}:", !Ref ActionTakenAPI, "/*"] ]
+
 ###################################### API GATEWAY #####################################################################
+
+  #STATUS
 
   StatusAPI:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: !Sub status-api-${Environment}
+      Name: !Sub dcss-${Environment}-status-api
       Description: "API used to return participant status"
-      FailOnWarnings: true
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
 
   StatusAPIStage:
     Type: AWS::ApiGateway::Stage
@@ -97,7 +131,52 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StatusAPIFunction.Arn}/invocations
 
+  #ACTION TAKEN
+
+  ActionTakenAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub dcss-${Environment}-action-taken-api
+      Description: "API used to post license action taken"
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  ActionTakenAPIStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref ActionTakenAPIDeployment
+      RestApiId: !Ref ActionTakenAPI
+      StageName: !Sub ${Environment}
+
+  ActionTakenAPIDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ActionTakenAPIRequest
+    Properties:
+      RestApiId: !Ref ActionTakenAPI
+
+  ActionTakenAPIResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ActionTakenAPI
+      ParentId: !GetAtt ActionTakenAPI.RootResourceId
+      PathPart: action-taken
+
+  ActionTakenAPIRequest:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      RestApiId: !Ref ActionTakenAPI
+      ResourceId: !Ref ActionTakenAPIResource
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionTakenFunction.Arn}/invocations
+
 ###################################### DYNAMODB ########################################################################
+
+  #DCSS TABLE
 
   DcssTable:
       Type: AWS::DynamoDB::Table
@@ -139,6 +218,51 @@ Resources:
           ReadCapacityUnits: 5
           WriteCapacityUnits: 5
 
+  #ACTION TAKEN
+  ActionTakenTable:
+        Type: AWS::DynamoDB::Table
+        Properties:
+          AttributeDefinitions:
+            - AttributeName: agencyCustomerId
+              AttributeType: S
+            - AttributeName: timestamp
+              AttributeType: S
+            - AttributeName: actionTakenDate
+              AttributeType: S
+            - AttributeName: actionTakenMonthYear
+              AttributeType: S
+          KeySchema:
+            - AttributeName: agencyCustomerId
+              KeyType: HASH
+            - AttributeName: timestamp
+              KeyType: RANGE
+          GlobalSecondaryIndexes:
+            -
+              IndexName: !Sub actionTakenDate-index
+              KeySchema:
+                -
+                  AttributeName: actionTakenDate
+                  KeyType: HASH
+              Projection:
+                ProjectionType: ALL
+              ProvisionedThroughput:
+                ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+            -
+              IndexName: !Sub actionTakenMonthYear-index
+              KeySchema:
+                -
+                  AttributeName: actionTakenMonthYear
+                  KeyType: HASH
+              Projection:
+                ProjectionType: ALL
+              ProvisionedThroughput:
+                ReadCapacityUnits: 5
+                WriteCapacityUnits: 5
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+
 ###################################### S3 BUCKETS AND EVENTS ###########################################################
 
   DelinquencyImportBucket:
@@ -146,7 +270,7 @@ Resources:
       DependsOn: DelinquencyImportFunctionS3Permission
       Properties:
         AccessControl: AuthenticatedRead
-        BucketName:  !Sub delinquency-import-bucket-${Environment}
+        BucketName:  !Sub dcss-${Environment}-delinquency-import-bucket
         NotificationConfiguration:
               LambdaConfigurations:
                 -
@@ -183,6 +307,20 @@ Resources:
               Action:
                 - sts:AssumeRole
 
+  ActionTakenFunctionRole:
+        Type: AWS::IAM::Role
+        Properties:
+          AssumeRolePolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Principal:
+                  Service:
+                    - lambda.amazonaws.com
+                Action:
+                  - sts:AssumeRole
+
   #common re-usable policies
 
   ReadDataOnlyPolicy:
@@ -210,6 +348,36 @@ Resources:
               - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-test-*
       Roles:
         - !Ref StatusAPIFunctionRole
+
+
+  UpdateDataPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: ReadDataOnlyPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:Query
+              - dynamodb:UpdateItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:BatchGetItem
+            Resource:
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-dev-*
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-test-*
+      Roles:
+        - !Ref ActionTakenFunctionRole
 
   LambdaImportPolicy:
     Type: AWS::IAM::Policy
@@ -243,8 +411,8 @@ Resources:
               - s3:Get*
               - s3:List*
             Resource:
-              - arn:aws:s3:::delinquency-import-bucket-dev/*
-              - arn:aws:s3:::delinquency-import-bucket-test/*
+              - arn:aws:s3:::dcss-test-*
+              - arn:aws:s3:::dcss-dev-*
       Roles:
         - !Ref DelinquencyImportFunctionRole
 
@@ -273,6 +441,7 @@ Resources:
                 AWS:
                   - !GetAtt DelinquencyImportFunctionRole.Arn
                   - !GetAtt StatusAPIFunctionRole.Arn
+                  - !GetAtt ActionTakenFunctionRole.Arn
               Action:
                 - kms:Encrypt
                 - kms:Decrypt
@@ -282,7 +451,7 @@ Resources:
   DCSSDataKMSKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: !Sub alias/dcss-key-${Environment}
+      AliasName: !Sub alias/dcss-${Environment}-key
       TargetKeyId:
         Ref: DCSSDataKMSKey
 

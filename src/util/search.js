@@ -11,7 +11,7 @@ const region = process.env.AWSREGION || 'us-west-1';
 const dynamodb = new AWS.DynamoDB({apiVersion: '2012-08-10', region});
 
 const hmacUtil = require('./hmac');
-const decryptUtil = require('./decrypt');
+const encryptUtil = require('./encrypt');
 const attr = require('dynamodb-data-types').AttributeValue;
 
 const MIN_LEVENSHTEIN = 3;
@@ -35,8 +35,21 @@ let unwrapDecrypt = (data) => {
         items.push(attr.unwrap(element));
     });
 
-    let actions = items.map(decryptUtil.decrypt);
+    let actions = items.map(decrypt(["fourMonthFlag", "cipherKey"]));
     return Promise.all(actions);
+};
+
+/**
+ * Returns a function that decrypts the data using the notEncrypted parameter passed in as a parameter.
+ */
+let decrypt = (notEncrypted) => {
+    return (data) => {
+        return encryptUtil.decrypt(data.participant, notEncrypted).then((decryptedData) => {
+            return new Promise((resolve, reject) => {
+                resolve(data);
+            });
+        });
+    };
 };
 
 /**
