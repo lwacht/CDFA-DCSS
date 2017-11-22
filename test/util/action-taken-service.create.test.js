@@ -12,7 +12,7 @@ test('create new record', (done) => {
         agencyFirstName: "Johnny",
         agencyLastName: "Seed",
         action: "DLQ",
-        actionDate: "2017-11-20"
+        actionTakenDate: "2017-11-20"
 
     };
     actionTaken.create(json)
@@ -23,7 +23,7 @@ test('create new record', (done) => {
             console.log(data);
             expect(data.agencyCustomerId).toBe("1234");
             expect(data.action).toBe("DLQ");
-            expect(data.actionDate).toBe("2017-11-20");
+            expect(data.actionTakenDate).toBe("2017-11-20");
             expect(data.agencyFirstName).toBeDefined();
             expect(data.agencyFirstName).not.toBe("Johnny");
             expect(data.agencyLastName).toBeDefined();
@@ -42,7 +42,7 @@ test('create 2 record same customerId', (done) => {
         agencyFirstName: "Johnny",
         agencyLastName: "Seed",
         action: "DLQ",
-        actionDate: "2017-11-20"
+        actionTakenDate: "2017-11-20"
 
     };
     actionTaken.create(json)
@@ -58,7 +58,7 @@ test('create 2 record same customerId', (done) => {
             console.log(data);
             expect(data.agencyCustomerId).toBe("1234");
             expect(data.action).toBe("DLQ");
-            expect(data.actionDate).toBe("2017-11-20");
+            expect(data.actionTakenDate).toBe("2017-11-20");
             expect(data.agencyFirstName).toBeDefined();
             expect(data.agencyFirstName).not.toBe("Johnny");
             expect(data.agencyLastName).toBeDefined();

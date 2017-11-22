@@ -21,8 +21,8 @@ module.exports = {
             "agencyCustomerId",
             "timestamp",
             "action",
-            "actionDate",
-            "actionMonthYear",
+            "actionTakenDate",
+            "actionTakenMonthYear",
             "match",
             "participantId"
         ])
@@ -71,6 +71,8 @@ module.exports = {
             })
             .then(()=> {
                 jsonData.timestamp = new Date().toISOString();
+                delete jsonData.ssn;
+                delete jsonData.stateId;
                 return this.create(jsonData);
             })
     }

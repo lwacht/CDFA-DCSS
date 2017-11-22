@@ -19,7 +19,7 @@ test('action taken - DCCS Participant - SSN', () => {
         stateId: "42",
         agencyLastName: "Seed",
         action: "DLQ",
-        actionDate: "2017-11-20",
+        actionTakenDate: "2017-11-20",
     };
     return LambdaTester(handler)
         .event(
@@ -28,6 +28,11 @@ test('action taken - DCCS Participant - SSN', () => {
             })
         .expectResult((result) => {
             expect(result.statusCode).toBe(200);
+            return actionTakenUtil.searchByDate('2017-11-20').then((result) => {
+                console.log(result);
+                expect(result.ssn).not.toBeDefined();
+                expect(result.stateId).not.toBeDefined();
+            });
         });
 });
 
@@ -37,7 +42,7 @@ test('action taken - agencyCustomerId missing', () => {
         stateId: "42",
         agencyLastName: "Seed",
         action: "DLQ",
-        actionDate: "2017-11-20",
+        actionTakenDate: "2017-11-20",
     };
     return LambdaTester(handler)
         .event(
@@ -56,7 +61,7 @@ test('action taken - agencyLastName missing', () => {
         ssn: "111220001",
         stateId: "42",
         action: "DLQ",
-        actionDate: "2017-11-20",
+        actionTakenDate: "2017-11-20",
     };
     return LambdaTester(handler)
         .event(
@@ -75,7 +80,7 @@ test('action taken - action missing', () => {
         agencyLastName: "Seed",
         ssn: "111220001",
         stateId: "42",
-        actionDate: "2017-11-20"
+        actionTakenDate: "2017-11-20"
     };
     return LambdaTester(handler)
         .event(
@@ -88,7 +93,7 @@ test('action taken - action missing', () => {
         });
 });
 
-test('action taken - actionDate missing', () => {
+test('action taken - actionTakenDate missing', () => {
     let body = {
         agencyCustomerId: "999901",
         agencyLastName: "Seed",
@@ -103,7 +108,7 @@ test('action taken - actionDate missing', () => {
             })
         .expectResult((result) => {
             expect(result.statusCode).toBe(400);
-            expect(result.body).toMatch(/actionDate/);
+            expect(result.body).toMatch(/actionTakenDate/);
         });
 });
 
@@ -113,7 +118,7 @@ test('action taken - stateId missing', () => {
         agencyLastName: "Seed",
         ssn: "111220001",
         action: "DLQ",
-        actionDate: "2017-11-20"
+        actionTakenDate: "2017-11-20"
     };
     return LambdaTester(handler)
         .event(
@@ -133,7 +138,7 @@ test('action taken - action not valid', () => {
         ssn: "111220001",
         stateId: "12",
         action: "WAT",
-        actionDate: "2017-11-20"
+        actionTakenDate: "2017-11-20"
     };
     return LambdaTester(handler)
         .event(

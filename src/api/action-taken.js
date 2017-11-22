@@ -19,7 +19,7 @@ const required = (parameterName, callback) => {
 };
 
 const actionTypes = ['DLQ', 'SUP', 'SUS', 'REL', 'REN', 'REV', 'RMD'];
-const requiredFields = ['agencyCustomerId', 'agencyLastName', 'action', 'actionDate', 'stateId'];
+const requiredFields = ['agencyCustomerId', 'agencyLastName', 'action', 'actionTakenDate', 'stateId'];
 exports.handler = (event, context, callback) => {
 
     let actionTakenJSON = JSON.parse(event.body);
