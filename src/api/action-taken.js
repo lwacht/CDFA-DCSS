@@ -8,16 +8,6 @@ const createResponse = (statusCode, body) => {
     }
 };
 
-/**
- * creates the required error callback and error message
- *
- * @param parameterName
- * @param callback
- */
-const required = (parameterName, callback) => {
-
-};
-
 const actionTypes = ['DLQ', 'SUP', 'SUS', 'REL', 'REN', 'REV', 'RMD'];
 const requiredFields = ['agencyCustomerId', 'agencyLastName', 'action', 'actionTakenDate', 'stateId'];
 exports.handler = (event, context, callback) => {

@@ -78,13 +78,49 @@ Resources:
           HASH_KEY: !Sub ${HashKey}
           KEY_ALIAS: !Ref DCSSDataKMSKeyAlias
 
-  ActionTakenFunctionGatewayPermission:
+  ActionTakenExportFunctionPermission:
       Type: AWS::Lambda::Permission
       Properties:
         Action: lambda:InvokeFunction
         FunctionName: !GetAtt ActionTakenFunction.Arn
         Principal: apigateway.amazonaws.com
         SourceArn: !Join [ "", [ "arn:aws:execute-api:", !Sub "${AWS::Region}:", !Sub "${AWS::AccountId}:", !Ref ActionTakenAPI, "/*"] ]
+
+
+  #ACTION TAKEN EXPORT
+  ActionTakenExportFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub dcss-${Environment}-action-taken-export-func
+      Handler: src/export/action-taken-export.handler
+      Runtime: nodejs6.10
+      Code: ./
+      Role: !GetAtt ActionTakenExportFunctionRole.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DcssTable
+          ACTION_TABLE_NAME: !Ref ActionTakenTable
+          HASH_KEY: !Sub ${HashKey}
+          KEY_ALIAS: !Ref DCSSDataKMSKeyAlias
+
+  ActionTakenFunctionGatewayPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt ActionTakenExportFunction.Arn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ActionTakenExportRule.Arn
+
+  ActionTakenExportRule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: 'cron(0 9 * * ? *)' #9AM UTC everyday = 1AM Pacific time
+      Targets:
+        -
+          Id: ActionTakenExportScheduler
+          Arn: !GetAtt ActionTakenExportFunction.Arn
+
+
 
 ###################################### API GATEWAY #####################################################################
 
@@ -321,6 +357,20 @@ Resources:
                 Action:
                   - sts:AssumeRole
 
+  ActionTakenExportFunctionRole:
+        Type: AWS::IAM::Role
+        Properties:
+          AssumeRolePolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Principal:
+                  Service:
+                    - lambda.amazonaws.com
+                Action:
+                  - sts:AssumeRole
+
   #common re-usable policies
 
   ReadDataOnlyPolicy:
@@ -410,11 +460,47 @@ Resources:
             Action:
               - s3:Get*
               - s3:List*
+              - s3:Delete*
             Resource:
               - arn:aws:s3:::dcss-test-*
               - arn:aws:s3:::dcss-dev-*
       Roles:
         - !Ref DelinquencyImportFunctionRole
+
+  LambdaExportPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: LambdaExportPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "*"
+          -
+            Effect: Allow
+            Action:
+              - dynamodb:GetItem
+              - dynamodb:Query
+              - dynamodb:BatchGetItem
+            Resource:
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-dev-*
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-test-*
+          -
+            Effect: Allow
+            Action:
+              - s3:Get*
+              - s3:List*
+              - s3:Put*
+            Resource:
+              - arn:aws:s3:::dcss-test-*
+              - arn:aws:s3:::dcss-dev-*
+      Roles:
+        - !Ref ActionTakenExportFunctionRole
 
 ###################################### KMS #############################################################################
 
