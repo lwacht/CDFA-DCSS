@@ -394,8 +394,7 @@ Resources:
               - dynamodb:Query
               - dynamodb:BatchGetItem
             Resource:
-              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-dev-*
-              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-test-*
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-${Environment}-*
       Roles:
         - !Ref StatusAPIFunctionRole
 
@@ -424,8 +423,7 @@ Resources:
               - dynamodb:BatchWriteItem
               - dynamodb:BatchGetItem
             Resource:
-              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-dev-*
-              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-test-*
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-${Environment}-*
       Roles:
         - !Ref ActionTakenFunctionRole
 
@@ -453,8 +451,7 @@ Resources:
               - dynamodb:BatchWriteItem
               - dynamodb:BatchGetItem
             Resource:
-              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-dev-*
-              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-test-*
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-${Environment}-*
           -
             Effect: Allow
             Action:
@@ -462,8 +459,7 @@ Resources:
               - s3:List*
               - s3:Delete*
             Resource:
-              - arn:aws:s3:::dcss-test-*
-              - arn:aws:s3:::dcss-dev-*
+              - !Sub arn:aws:s3:::dcss-${Environment}-*
       Roles:
         - !Ref DelinquencyImportFunctionRole
 
@@ -488,8 +484,7 @@ Resources:
               - dynamodb:Query
               - dynamodb:BatchGetItem
             Resource:
-              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-dev-*
-              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-test-*
+              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-${Environment}-*
           -
             Effect: Allow
             Action:
@@ -497,8 +492,7 @@ Resources:
               - s3:List*
               - s3:Put*
             Resource:
-              - arn:aws:s3:::dcss-test-*
-              - arn:aws:s3:::dcss-dev-*
+              - !Sub arn:aws:s3:::dcss-${Environment}-*
       Roles:
         - !Ref ActionTakenExportFunctionRole
 
