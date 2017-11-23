@@ -88,6 +88,7 @@ Resources:
 
 
   #ACTION TAKEN EXPORT
+
   ActionTakenExportFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -328,6 +329,9 @@ Resources:
                   - lambda.amazonaws.com
               Action:
                 - sts:AssumeRole
+        ManagedPolicyArns:
+          - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+          - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-update-policy
 
   StatusAPIFunctionRole:
       Type: AWS::IAM::Role
@@ -342,6 +346,11 @@ Resources:
                   - lambda.amazonaws.com
               Action:
                 - sts:AssumeRole
+        ManagedPolicyArns:
+          - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+          - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-read-policy
+          - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
+          - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-delete-policy
 
   ActionTakenFunctionRole:
         Type: AWS::IAM::Role
@@ -356,6 +365,9 @@ Resources:
                     - lambda.amazonaws.com
                 Action:
                   - sts:AssumeRole
+          ManagedPolicyArns:
+            - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+            - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-update-policy
 
   ActionTakenExportFunctionRole:
         Type: AWS::IAM::Role
@@ -370,131 +382,11 @@ Resources:
                     - lambda.amazonaws.com
                 Action:
                   - sts:AssumeRole
-
-  #common re-usable policies
-
-  ReadDataOnlyPolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: ReadDataOnlyPolicy
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          -
-            Effect: Allow
-            Action:
-              - logs:CreateLogGroup
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-            Resource: "*"
-          -
-            Effect: Allow
-            Action:
-              - dynamodb:GetItem
-              - dynamodb:Query
-              - dynamodb:BatchGetItem
-            Resource:
-              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-${Environment}-*
-      Roles:
-        - !Ref StatusAPIFunctionRole
-
-
-  UpdateDataPolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: ReadDataOnlyPolicy
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          -
-            Effect: Allow
-            Action:
-              - logs:CreateLogGroup
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-            Resource: "*"
-          -
-            Effect: Allow
-            Action:
-              - dynamodb:GetItem
-              - dynamodb:PutItem
-              - dynamodb:Query
-              - dynamodb:UpdateItem
-              - dynamodb:BatchWriteItem
-              - dynamodb:BatchGetItem
-            Resource:
-              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-${Environment}-*
-      Roles:
-        - !Ref ActionTakenFunctionRole
-
-  LambdaImportPolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: LambdaImportPolicy
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          -
-            Effect: Allow
-            Action:
-              - logs:CreateLogGroup
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-            Resource: "*"
-          -
-            Effect: Allow
-            Action:
-              - dynamodb:GetItem
-              - dynamodb:PutItem
-              - dynamodb:Query
-              - dynamodb:UpdateItem
-              - dynamodb:BatchWriteItem
-              - dynamodb:BatchGetItem
-            Resource:
-              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-${Environment}-*
-          -
-            Effect: Allow
-            Action:
-              - s3:Get*
-              - s3:List*
-              - s3:Delete*
-            Resource:
-              - !Sub arn:aws:s3:::dcss-${Environment}-*
-      Roles:
-        - !Ref DelinquencyImportFunctionRole
-
-  LambdaExportPolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: LambdaExportPolicy
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          -
-            Effect: Allow
-            Action:
-              - logs:CreateLogGroup
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-            Resource: "*"
-          -
-            Effect: Allow
-            Action:
-              - dynamodb:GetItem
-              - dynamodb:Query
-              - dynamodb:BatchGetItem
-            Resource:
-              - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/dcss-${Environment}-*
-          -
-            Effect: Allow
-            Action:
-              - s3:Get*
-              - s3:List*
-              - s3:Put*
-            Resource:
-              - !Sub arn:aws:s3:::dcss-${Environment}-*
-      Roles:
-        - !Ref ActionTakenExportFunctionRole
+          ManagedPolicyArns:
+            - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+            - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-read-policy
+            - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
+            - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-put-policy
 
 ###################################### KMS #############################################################################
 
