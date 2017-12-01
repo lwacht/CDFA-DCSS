@@ -1,5 +1,5 @@
 process.env.TABLE_NAME = 'dcss-local-test';
-const region = process.env.AWSREGION || 'us-west-1';
+const region = process.env.AWS_REGION || 'us-west-1';
 const AWS = require('aws-sdk');
 AWS.config.update({
     region: region

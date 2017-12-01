@@ -6,7 +6,7 @@
 const {Writable} = require('stream');
 const AWS = require('aws-sdk');
 const TABLE_NAME = process.env.TABLE_NAME;
-const region = process.env.AWSREGION || 'us-west-1';
+const region = process.env.AWS_REGION || 'us-west-1';
 AWS.config.update({
     region: region
 });

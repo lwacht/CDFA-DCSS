@@ -3,7 +3,7 @@ process.env.TABLE_NAME = 'dcss-local-test';
 const TEST_TABLE_NAME = process.env.TABLE_NAME;
 const AWS = require('aws-sdk');
 const attr = require('dynamodb-data-types').AttributeValue;
-const region = process.env.AWSREGION || 'us-west-1';
+const region = process.env.AWS_REGION || 'us-west-1';
 AWS.config.update({
     region: region
 });

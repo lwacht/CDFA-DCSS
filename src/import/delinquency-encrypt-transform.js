@@ -4,7 +4,7 @@
 const {Transform} = require('stream');
 const hmacUtil = require('../../src/util/hmac');
 const AWS = require('aws-sdk');
-const region = process.env.AWSREGION || 'us-west-1';
+const region = process.env.AWS_REGION || 'us-west-1';
 const kms = new AWS.KMS({apiVersion: '2014-11-01', region});
 const crypto = require('crypto');
 

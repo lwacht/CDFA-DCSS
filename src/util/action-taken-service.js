@@ -2,7 +2,7 @@
  * Service utility for CRUD operations on the ActionTaken DynamoDB table
  */
 const AWS = require('aws-sdk');
-const region = process.env.AWSREGION || 'us-west-1';
+const region = process.env.AWS_REGION || 'us-west-1';
 const dynamodb = new AWS.DynamoDB({region: region});
 
 const attr = require('dynamodb-data-types').AttributeValue;

@@ -1,5 +1,5 @@
 const AWS = require('aws-sdk');
-const dynamodb = new AWS.DynamoDB({region: process.env.AWSREGION || 'us-west-1'});
+const dynamodb = new AWS.DynamoDB({region: process.env.AWS_REGION || 'us-west-1'});
 const attr = require('dynamodb-data-types').AttributeValue;
 
 module.exports = {

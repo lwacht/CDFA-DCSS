@@ -1,7 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const region = process.env.AWSREGION || 'us-west-1';
+const region = process.env.AWS_REGION || 'us-west-1';
 const s3 = new AWS.S3({apiVersion: '2006-03-01', region: region});
 const jsonTransform = require('./delinquency-json-transform');
 const encryptTransform = require("../../src/import/delinquency-encrypt-transform");

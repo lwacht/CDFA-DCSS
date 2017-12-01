@@ -5,6 +5,8 @@ Parameters:
     Type: String
   HashKey:
     Type: String
+  AwsUsGov:
+    Type: String
 
 Resources:
 
@@ -20,11 +22,10 @@ Resources:
       Runtime: nodejs6.10
       Code: ./
       Role: !GetAtt DelinquencyImportFunctionRole.Arn
-      KmsKeyArn: !GetAtt DCSSDataKMSKey.Arn
       Environment:
         Variables:
           TABLE_NAME: !Ref DcssTable
-          KEY_ALIAS: !Ref DCSSDataKMSKeyAlias
+          KEY_ALIAS: !Sub alias/dcss-${Environment}-key
           HASH_KEY: !Sub ${HashKey}
 
   DelinquencyImportFunctionS3Permission:
@@ -46,7 +47,6 @@ Resources:
       Runtime: nodejs6.10
       Code: ./
       Role: !GetAtt StatusAPIFunctionRole.Arn
-      KmsKeyArn: !GetAtt DCSSDataKMSKey.Arn
       Environment:
         Variables:
           TABLE_NAME: !Ref DcssTable
@@ -58,7 +58,7 @@ Resources:
         Action: lambda:InvokeFunction
         FunctionName: !GetAtt StatusAPIFunction.Arn
         Principal: apigateway.amazonaws.com
-        SourceArn: !Join [ "", [ "arn:aws:execute-api:", !Sub "${AWS::Region}:", !Sub "${AWS::AccountId}:", !Ref StatusAPI, "/*"] ]
+        SourceArn: !Sub arn:${AwsUsGov}:execute-api:${AWS::Region}:${AWS::AccountId}:${StatusAPI}/*
 
   #ACTION TAKEN
 
@@ -70,13 +70,12 @@ Resources:
       Runtime: nodejs6.10
       Code: ./
       Role: !GetAtt ActionTakenFunctionRole.Arn
-      KmsKeyArn: !GetAtt DCSSDataKMSKey.Arn
       Environment:
         Variables:
           TABLE_NAME: !Ref DcssTable
           ACTION_TABLE_NAME: !Ref ActionTakenTable
           HASH_KEY: !Sub ${HashKey}
-          KEY_ALIAS: !Ref DCSSDataKMSKeyAlias
+          KEY_ALIAS: !Sub alias/dcss-${Environment}-key
 
   ActionTakenExportFunctionPermission:
       Type: AWS::Lambda::Permission
@@ -84,7 +83,7 @@ Resources:
         Action: lambda:InvokeFunction
         FunctionName: !GetAtt ActionTakenFunction.Arn
         Principal: apigateway.amazonaws.com
-        SourceArn: !Join [ "", [ "arn:aws:execute-api:", !Sub "${AWS::Region}:", !Sub "${AWS::AccountId}:", !Ref ActionTakenAPI, "/*"] ]
+        SourceArn: !Sub arn:${AwsUsGov}:execute-api:${AWS::Region}:${AWS::AccountId}:${ActionTakenAPI}/*
 
 
   #ACTION TAKEN EXPORT
@@ -102,7 +101,7 @@ Resources:
           TABLE_NAME: !Ref DcssTable
           ACTION_TABLE_NAME: !Ref ActionTakenTable
           HASH_KEY: !Sub ${HashKey}
-          KEY_ALIAS: !Ref DCSSDataKMSKeyAlias
+          KEY_ALIAS: !Sub alias/dcss-${Environment}-key
 
   ActionTakenFunctionGatewayPermission:
     Type: AWS::Lambda::Permission
@@ -120,7 +119,6 @@ Resources:
         -
           Id: ActionTakenExportScheduler
           Arn: !GetAtt ActionTakenExportFunction.Arn
-
 
 
 ###################################### API GATEWAY #####################################################################
@@ -166,7 +164,7 @@ Resources:
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StatusAPIFunction.Arn}/invocations
+        Uri: !Sub arn:${AwsUsGov}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StatusAPIFunction.Arn}/invocations
 
   #ACTION TAKEN
 
@@ -209,7 +207,7 @@ Resources:
       Integration:
         Type: AWS_PROXY
         IntegrationHttpMethod: POST
-        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionTakenFunction.Arn}/invocations
+        Uri: !Sub arn:${AwsUsGov}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionTakenFunction.Arn}/invocations
 
 ###################################### DYNAMODB ########################################################################
 
@@ -218,6 +216,7 @@ Resources:
   DcssTable:
       Type: AWS::DynamoDB::Table
       Properties:
+        TableName: !Sub dcss-${Environment}-dcss-table
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -259,6 +258,7 @@ Resources:
   ActionTakenTable:
         Type: AWS::DynamoDB::Table
         Properties:
+          TableName: !Sub dcss-${Environment}-action-taken-table
           AttributeDefinitions:
             - AttributeName: agencyCustomerId
               AttributeType: S
@@ -306,7 +306,6 @@ Resources:
       Type: AWS::S3::Bucket
       DependsOn: DelinquencyImportFunctionS3Permission
       Properties:
-        AccessControl: AuthenticatedRead
         BucketName:  !Sub dcss-${Environment}-delinquency-import-bucket
         NotificationConfiguration:
               LambdaConfigurations:
@@ -319,6 +318,7 @@ Resources:
   DelinquencyImportFunctionRole:
       Type: AWS::IAM::Role
       Properties:
+        RoleName: !Sub dcss-${Environment}-delinquency-import-func-role
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -330,12 +330,15 @@ Resources:
               Action:
                 - sts:AssumeRole
         ManagedPolicyArns:
-          - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
-          - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-update-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-delete-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-update-policy
 
   StatusAPIFunctionRole:
       Type: AWS::IAM::Role
       Properties:
+        RoleName: !Sub dcss-${Environment}-status-api-func-role
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -347,14 +350,13 @@ Resources:
               Action:
                 - sts:AssumeRole
         ManagedPolicyArns:
-          - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
-          - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-read-policy
-          - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
-          - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-delete-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-read-policy
 
   ActionTakenFunctionRole:
         Type: AWS::IAM::Role
         Properties:
+          RoleName: !Sub dcss-${Environment}-action-taken-func-role
           AssumeRolePolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -366,12 +368,13 @@ Resources:
                 Action:
                   - sts:AssumeRole
           ManagedPolicyArns:
-            - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
-            - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-update-policy
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-update-policy
 
   ActionTakenExportFunctionRole:
         Type: AWS::IAM::Role
         Properties:
+          RoleName: !Sub dcss-${Environment}-action-taken-export-func-role
           AssumeRolePolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -383,48 +386,8 @@ Resources:
                 Action:
                   - sts:AssumeRole
           ManagedPolicyArns:
-            - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
-            - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-read-policy
-            - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
-            - !Sub arn:aws:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-put-policy
-
-###################################### KMS #############################################################################
-
-  DCSSDataKMSKey:
-    Type: AWS::KMS::Key
-    Properties:
-      Description: 'Master key for dcss envelope data encryption'
-      KeyPolicy:
-          Version: "2012-10-17"
-          Id: !Sub ${AWS::StackName}-DCSSDataKeyPolicy
-          Statement:
-            - Sid: "Allow administration of the key only to root"
-              Effect: Allow
-              Principal:
-                #AWS: arn:aws:iam::AccountId:root
-                AWS:
-                  - !Join [ "", [ "arn:aws:iam::", !Ref "AWS::AccountId", ":root" ] ]
-                  - !Join [ "", [ "arn:aws:iam::", !Ref "AWS::AccountId", ":user/dcss-dev" ] ]
-              Resource: "*"
-              Action: kms:*
-            - Sid: "Allow access to encrypt/decrypt abilities to the lambda functions"
-              Effect: Allow
-              Principal:
-                AWS:
-                  - !GetAtt DelinquencyImportFunctionRole.Arn
-                  - !GetAtt StatusAPIFunctionRole.Arn
-                  - !GetAtt ActionTakenFunctionRole.Arn
-              Action:
-                - kms:Encrypt
-                - kms:Decrypt
-                - kms:GenerateDataKey*
-              Resource: "*"
-
-  DCSSDataKMSKeyAlias:
-    Type: AWS::KMS::Alias
-    Properties:
-      AliasName: !Sub alias/dcss-${Environment}-key
-      TargetKeyId:
-        Ref: DCSSDataKMSKey
-
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-read-policy
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-put-policy
 
