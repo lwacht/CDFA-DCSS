@@ -1,8 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const region = process.env.AWS_REGION || 'us-west-1';
-const s3 = new AWS.S3({apiVersion: '2006-03-01', region: region});
+const s3 = new AWS.S3();
 const jsonTransform = require('./delinquency-json-transform');
 const encryptTransform = require("../../src/import/delinquency-encrypt-transform");
 const dynamodbWriter = require('./delinquency-dynamodb-write');
@@ -17,14 +16,7 @@ exports.handler = (event, context, callback) => {
         Bucket: bucket,
         Key: key
     };
-    s3.getObject(params, (err, data) => {
-        if (err) {
-            console.log(err);
-            const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
-            console.log(message);
-            callback(message);
-        }
-    }).createReadStream()
+    s3.getObject(params).createReadStream()
         .pipe(jsonTransform.transform())
         .pipe(encryptTransform.transform(process.env.KEY_ALIAS, process.env.HASH_KEY))
         .pipe(dynamodbWriter.writer(key))
@@ -32,6 +24,9 @@ exports.handler = (event, context, callback) => {
             context.callbackWaitsForEmptyEventLoop = false;
             console.log("Success");
             callback();
+        })
+        .on('error', (error) => {
+            console.log(error);
+            callback(error);
         });
-
 };

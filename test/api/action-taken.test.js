@@ -2,6 +2,7 @@ process.env.ACTION_TABLE_NAME = 'dcss-local-test-action-taken';
 process.env.TABLE_NAME = 'dcss-local-test';
 process.env.KEY_ALIAS = 'alias/dcss-dev';
 process.env.HASH_KEY = 'TESTING';
+process.env.AWS_REGION = 'us-west-1';
 
 const LambdaTester = require('lambda-tester');
 const handler = require('../../src/api/action-taken').handler;

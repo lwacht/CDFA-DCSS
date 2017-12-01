@@ -1,4 +1,6 @@
 process.env.KEY_ALIAS = 'alias/dcss-dev';
+process.env.AWS_REGION = 'us-west-1';
+
 const fs = require('fs');
 const hmacUtil = require('../../src/util/hmac');
 const jsonTransform = require("../../src/import/delinquency-json-transform");

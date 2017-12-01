@@ -4,8 +4,7 @@
  * @author John Towell
  */
 const AWS = require('aws-sdk');
-const region = process.env.AWS_REGION || 'us-west-1';
-const kms = new AWS.KMS({apiVersion: '2014-11-01', region});
+const kms = new AWS.KMS();
 const crypto = require('crypto');
 
 module.exports = {

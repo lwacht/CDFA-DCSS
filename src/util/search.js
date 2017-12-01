@@ -7,8 +7,7 @@
 const Levenshtein = require("levenshtein");
 
 const AWS = require('aws-sdk');
-const region = process.env.AWS_REGION || 'us-west-1';
-const dynamodb = new AWS.DynamoDB({apiVersion: '2012-08-10', region});
+const dynamodb = new AWS.DynamoDB();
 
 const hmacUtil = require('./hmac');
 const encryptUtil = require('./encrypt');

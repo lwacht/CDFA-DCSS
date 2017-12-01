@@ -1,7 +1,7 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const s3 = new AWS.S3({apiVersion: '2006-03-01'});
+const s3 = new AWS.S3();
 const parser = require('./daily-release-json-transform');
 const writer = require('./daily-release-dynamodb-write');
 

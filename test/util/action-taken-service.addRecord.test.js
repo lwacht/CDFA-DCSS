@@ -2,6 +2,7 @@ process.env.ACTION_TABLE_NAME = 'dcss-local-test-action-taken';
 process.env.KEY_ALIAS = 'alias/dcss-local-test-key';
 process.env.TABLE_NAME = 'dcss-local-test';
 process.env.HASH_KEY = 'TESTING';
+process.env.AWS_REGION = 'us-west-1';
 
 const actionTaken = require('../../src/util/action-taken-service');
 const actionTakenUtil = require('../action-taken-util');

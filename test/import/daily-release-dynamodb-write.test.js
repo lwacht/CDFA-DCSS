@@ -1,4 +1,6 @@
 process.env.TABLE_NAME = 'dcss-local-test';
+process.env.AWS_REGION = 'us-west-1';
+
 const fs = require('fs');
 const attr = require('dynamodb-data-types').AttributeValue;
 const jsonTransform = require("../../src/import/daily-release-json-transform");

@@ -6,10 +6,6 @@
 const {Writable} = require('stream');
 const AWS = require('aws-sdk');
 const TABLE_NAME = process.env.TABLE_NAME;
-const region = process.env.AWS_REGION || 'us-west-1';
-AWS.config.update({
-    region: region
-});
 const dynamodb = new AWS.DynamoDB();
 
 module.exports = {
