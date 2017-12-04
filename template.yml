@@ -12,6 +12,34 @@ Resources:
 
 ###################################### LAMBDA FUNCTIONS ################################################################
 
+  #INCOMING SFTP
+
+  IncomingSftpFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub dcss-${Environment}-incoming-sftp-func
+      Handler: src/import/incoming-sftp.handler
+      Runtime: nodejs6.10
+      Code: ./
+      Role: !GetAtt IncomingSftpFunctionRole.Arn
+
+  IncomingSftpFunctionEventPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt IncomingSftpFunction.Arn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt IncomingSftpCronRule.Arn
+
+  IncomingSftpCronRule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: 'cron(0 10 * * ? *)' #10AM UTC everyday - 2AM Pacific time
+      Targets:
+        -
+          Id: IncomingSftpScheduler
+          Arn: !GetAtt IncomingSftpFunction.Arn
+
   #DELINQUENCY IMPORT
 
   DelinquencyImportFunction:
@@ -35,7 +63,32 @@ Resources:
         FunctionName: !GetAtt DelinquencyImportFunction.Arn
         Principal: s3.amazonaws.com
         SourceAccount: !Ref AWS::AccountId
-        SourceArn: !Sub arn:aws:s3:::dcss-${Environment}-delinquency-import-bucket
+        SourceArn: !Sub arn:${AwsUsGov}:s3:::dcss-${Environment}-delinquency-import-bucket
+
+  #DAILY RELEASE IMPORT
+
+  DailyReleaseImportFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub dcss-${Environment}-daily-release-import-func
+      Handler: src/import/daily-release-import.handler
+      Runtime: nodejs6.10
+      Code: ./
+      Role: !GetAtt DailyReleaseImportFunctionRole.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DcssTable
+          KEY_ALIAS: !Sub alias/dcss-${Environment}-key
+          HASH_KEY: !Sub ${HashKey}
+
+  DailyReleaseImportFunctionS3Permission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !GetAtt DailyReleaseImportFunction.Arn
+        Principal: s3.amazonaws.com
+        SourceAccount: !Ref AWS::AccountId
+        SourceArn: !Sub arn:${AwsUsGov}:s3:::dcss-${Environment}-daily-release-import-bucket
 
   #STATUS
 
@@ -77,7 +130,7 @@ Resources:
           HASH_KEY: !Sub ${HashKey}
           KEY_ALIAS: !Sub alias/dcss-${Environment}-key
 
-  ActionTakenExportFunctionPermission:
+  ActionTakenExportFunctionGatewayPermission:
       Type: AWS::Lambda::Permission
       Properties:
         Action: lambda:InvokeFunction
@@ -103,7 +156,7 @@ Resources:
           HASH_KEY: !Sub ${HashKey}
           KEY_ALIAS: !Sub alias/dcss-${Environment}-key
 
-  ActionTakenFunctionGatewayPermission:
+  ActionTakenFunctionEventPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
@@ -114,11 +167,65 @@ Resources:
   ActionTakenExportRule:
     Type: AWS::Events::Rule
     Properties:
-      ScheduleExpression: 'cron(0 9 * * ? *)' #9AM UTC everyday = 1AM Pacific time
+      ScheduleExpression: 'cron(0 9 * * ? *)' #9AM UTC everyday - 1AM Pacific time
       Targets:
         -
           Id: ActionTakenExportScheduler
           Arn: !GetAtt ActionTakenExportFunction.Arn
+
+  #ACTION TAKEN STATS EXPORT
+
+  ActionTakenStatsExportFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub dcss-${Environment}-action-taken-stats-export-func
+      Handler: src/export/action-taken-stats-export.handler
+      Runtime: nodejs6.10
+      Code: ./
+      Role: !GetAtt ActionTakenStatsExportFunctionRole.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DcssTable
+          ACTION_TABLE_NAME: !Ref ActionTakenTable
+          HASH_KEY: !Sub ${HashKey}
+          KEY_ALIAS: !Sub alias/dcss-${Environment}-key
+
+  ActionTakenStatsFunctionEventPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt ActionTakenStatsExportFunction.Arn
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ActionTakenStatsExportRule.Arn
+
+  ActionTakenStatsExportRule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: 'cron(0 9 1 * ? *)' #9AM UTC on first of month - 1AM Pacific time
+      Targets:
+        -
+          Id: ActionTakenStatsExportScheduler
+          Arn: !GetAtt ActionTakenStatsExportFunction.Arn
+
+  #OUTGOING SFTP
+
+  OutgoingSftpFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub dcss-${Environment}-outgoing-sftp-func
+      Handler: src/export/outgoing-sftp.handler
+      Runtime: nodejs6.10
+      Code: ./
+      Role: !GetAtt OutgoingSftpFunctionRole.Arn
+
+  OutgoingSftpFunctionS3Permission:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName: !GetAtt OutgoingSftpFunction.Arn
+        Principal: s3.amazonaws.com
+        SourceAccount: !Ref AWS::AccountId
+        SourceArn: !Sub arn:${AwsUsGov}:s3:::dcss-${Environment}-action-taken-export-bucket
 
 
 ###################################### API GATEWAY #####################################################################
@@ -313,12 +420,75 @@ Resources:
                   Function: !GetAtt DelinquencyImportFunction.Arn
                   Event: "s3:ObjectCreated:*"
 
+  DailyReleaseImportBucket:
+      Type: AWS::S3::Bucket
+      DependsOn: DailyReleaseImportFunctionS3Permission
+      Properties:
+        BucketName:  !Sub dcss-${Environment}-daily-release-import-bucket
+        NotificationConfiguration:
+              LambdaConfigurations:
+                -
+                  Function: !GetAtt DailyReleaseImportFunction.Arn
+                  Event: "s3:ObjectCreated:*"
+
+  ActionTakenExportBucket:
+      Type: AWS::S3::Bucket
+      DependsOn: OutgoingSftpFunctionS3Permission
+      Properties:
+        BucketName:  !Sub dcss-${Environment}-action-taken-export-bucket
+        NotificationConfiguration:
+              LambdaConfigurations:
+                -
+                  Function: !GetAtt OutgoingSftpFunction.Arn
+                  Event: "s3:ObjectCreated:*"
+
 ###################################### ROLES AND POLICIES ##############################################################
+
+  IncomingSftpFunctionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: !Sub dcss-${Environment}-incoming-sftp-func-role
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            -
+              Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action:
+                - sts:AssumeRole
+        ManagedPolicyArns:
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-put-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-update-policy
 
   DelinquencyImportFunctionRole:
       Type: AWS::IAM::Role
       Properties:
         RoleName: !Sub dcss-${Environment}-delinquency-import-func-role
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            -
+              Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action:
+                - sts:AssumeRole
+        ManagedPolicyArns:
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-delete-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-update-policy
+
+
+  DailyReleaseImportFunctionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: !Sub dcss-${Environment}-daily-release-import-func-role
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -390,4 +560,43 @@ Resources:
             - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-read-policy
             - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
             - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-put-policy
+
+  ActionTakenStatsExportFunctionRole:
+        Type: AWS::IAM::Role
+        Properties:
+          RoleName: !Sub dcss-${Environment}-action-taken-stats-export-func-role
+          AssumeRolePolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Principal:
+                  Service:
+                    - lambda.amazonaws.com
+                Action:
+                  - sts:AssumeRole
+          ManagedPolicyArns:
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-read-policy
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-put-policy
+
+  OutgoingSftpFunctionRole:
+        Type: AWS::IAM::Role
+        Properties:
+          RoleName: !Sub dcss-${Environment}-outgoing-sftp-func-role
+          AssumeRolePolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              -
+                Effect: Allow
+                Principal:
+                  Service:
+                    - lambda.amazonaws.com
+                Action:
+                  - sts:AssumeRole
+          ManagedPolicyArns:
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-delete-policy
 
