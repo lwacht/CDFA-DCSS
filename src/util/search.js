@@ -122,5 +122,19 @@ module.exports = {
             .then((decryptedData) => {
                 return levenshtein(decryptedData, lastName, distanceLimit);
             });
+    },
+
+    getById: function (id) {
+        let params = {
+            Key: {"id": {S: id}},
+            TableName: process.env.TABLE_NAME
+        };
+        return dynamodb.getItem(params).promise()
+            .then((record) => {
+                if (record.Item) {
+                    let unwrapped = attr.unwrap(record.Item);
+                    return decrypt(["fourMonthFlag", "cipherKey"])(unwrapped);
+                }
+            });
     }
 };

@@ -63,3 +63,12 @@ test('stateId and lastName equal search', (done) => {
         done();
     });
 });
+
+test('getById', (done) => {
+    search.getById('1').then((data) => {
+        console.log(data);
+        expect(data.id).toBe("1");
+        expect(data.participant.lastName).toBe("SEED");
+        done();
+    });
+});

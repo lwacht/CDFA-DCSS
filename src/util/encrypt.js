@@ -31,13 +31,14 @@ module.exports = {
             });
     },
     decrypt: function (encryptedJSON, notEncrypted) {
+        notEncrypted.push('cipherKey');
         let params = {
             CiphertextBlob: encryptedJSON.cipherKey
         };
         return kms.decrypt(params).promise()
             .then((data) => {
                 return new Promise((resolve, reject) => {
-                    Object.keys(encryptedJSON).forEach((key, index) => {
+                    Object.keys(encryptedJSON).forEach((key) => {
                         if (!notEncrypted.includes(key)) {
                             let decipher = crypto.createDecipher('aes256', data.Plaintext);
                             let decrypted = decipher.update(encryptedJSON[key], 'hex', 'utf8');
@@ -45,6 +46,7 @@ module.exports = {
                             encryptedJSON[key] = decrypted;
                         }
                     });
+                    delete encryptedJSON.cipherKey;
                     resolve(encryptedJSON);
                 });
             });

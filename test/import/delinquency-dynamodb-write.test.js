@@ -1,9 +1,7 @@
 process.env.TABLE_NAME = 'dcss-local-test';
-const region = process.env.AWS_REGION || 'us-west-1';
+process.env.AWS_REGION = 'us-west-1';
+
 const AWS = require('aws-sdk');
-AWS.config.update({
-    region: region
-});
 const fs = require('fs');
 const attr = require('dynamodb-data-types').AttributeValue;
 const jsonTransform = require("../../src/import/delinquency-json-transform");

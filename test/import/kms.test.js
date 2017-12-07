@@ -1,10 +1,9 @@
 //process.env.AWS_ACCESS_KEY_ID='AKIAJTBVF5GXMOCCZPHQ';
 //process.env.AWS_SECRET_ACCESS_KEY='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';
+process.env.AWS_REGION = 'us-west-1';
 
 const AWS = require('aws-sdk');
-
-const region = process.env.AWS_REGION || 'us-west-1';
-const kms = new AWS.KMS({ apiVersion: '2014-11-01', region });
+const kms = new AWS.KMS();
 const crypto = require('crypto');
 
 
