@@ -43,7 +43,7 @@ module.exports = {
             fs.createReadStream(filePath)
                 .pipe(jsonTransform.transform())
                 .pipe(encryptTransform.transform(process.env.KEY_ALIAS, process.env.HASH_KEY))
-                .pipe(dynamodbWriter.writer(filePath))
+                .pipe(dynamodbWriter.writer(filePath, {count:0}))
                 .on('finish', () => {
                     resolve();
                 })

@@ -26,10 +26,12 @@ beforeEach(() => {
 
 test('write to dynamodb with encryption', (done) => {
 
+    let stats = {count:0};
+
     fs.createReadStream("test/import/delinquency-import-test-3.txt")
         .pipe(jsonTransform.transform())
         .pipe(encryptTransform.transform('alias/dcss-dev', hashKey))
-        .pipe(dynamodbWriter.writer(fileName))
+        .pipe(dynamodbWriter.writer(fileName, stats))
         .on('finish', () => {
             util.get('1').then((data) => {
                 validate(data);
@@ -47,6 +49,8 @@ test('write to dynamodb with encryption', (done) => {
         //hashed values
         expect(data.ssnHash).toBeDefined();
         expect(data.stateIdHash).toBeDefined();
+
+        expect(stats.count).toBe(3);
     };
 });
 

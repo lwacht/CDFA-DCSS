@@ -20,11 +20,13 @@ exports.handler = (event, context, callback) => {
         .pipe(jsonTransformer.transform())
         .pipe(dynamoWriter.writer(key, stats))
         .on('finish', () => {
+            let result = {
+                result: 'success',
+                recordCount: stats.count
+            };
+            console.log(result);
             s3.deleteObject(params).promise().then(()=>{
-                callback(null, {
-                    result: 'success',
-                    recordCount: stats.count
-                });
+                callback(null, result);
             });
         })
         .on('error', (error) => {

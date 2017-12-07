@@ -8,10 +8,11 @@ const TABLE_NAME = process.env.TABLE_NAME;
 const dynamodb = new AWS.DynamoDB();
 
 module.exports = {
-    writer: function (fileName) {
+    writer: function (fileName, stats) {
         return new Writable({
             objectMode: true,
             write(chunk, encoding, callback) {
+                stats.count++;
                 let record = {
                     id: {S: chunk.id},
                     participant: attr.wrap(chunk),
