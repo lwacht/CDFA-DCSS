@@ -2,8 +2,8 @@
 
 const AWS = require('aws-sdk');
 const s3 = new AWS.S3();
-const parser = require('./daily-release-json-transform');
-const writer = require('./daily-release-dynamodb-write');
+const jsonTransformer = require('./daily-release-json-transform');
+const dynamoWriter = require('./daily-release-dynamodb-write');
 
 exports.handler = (event, context, callback) => {
 
@@ -13,15 +13,23 @@ exports.handler = (event, context, callback) => {
         Bucket: bucket,
         Key: key
     };
-    s3.getObject(params, (err, data) => {
-        if (err) {
-            console.log(err);
-            const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
-            console.log(message);
-            callback(message);
-        }
-    }).createReadStream()
-        .pipe(parser.jsonTransform)
-        .pipe(writer.writer(key));
+    let stats = {
+        count:0
+    };
+    s3.getObject(params).createReadStream()
+        .pipe(jsonTransformer.transform())
+        .pipe(dynamoWriter.writer(key, stats))
+        .on('finish', () => {
+            s3.deleteObject(params).promise().then(()=>{
+                callback(null, {
+                    result: 'success',
+                    recordCount: stats.count
+                });
+            });
+        })
+        .on('error', (error) => {
+            console.log(error);
+            callback(error);
+        });
 
 };

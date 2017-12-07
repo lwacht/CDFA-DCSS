@@ -35,7 +35,12 @@ module.exports = {
             Key: {"id": {S: id}},
             TableName: TEST_TABLE_NAME
         };
-        return dynamodb.getItem(params).promise();
+        return dynamodb.getItem(params).promise().then((data)=> {
+            data = attr.unwrap(data.Item);
+            return new Promise((resolve) => {
+                resolve(data);
+            });
+        });
     },
 
     load: function (filePath) {

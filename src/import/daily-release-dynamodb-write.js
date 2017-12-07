@@ -9,11 +9,11 @@ const TABLE_NAME = process.env.TABLE_NAME;
 const dynamodb = new AWS.DynamoDB();
 
 module.exports = {
-    writer: function (fileName) {
+    writer: function (fileName, stats) {
         return new Writable({
             objectMode: true,
             write(chunk, encoding, callback) {
-                console.log(chunk);
+                stats.count++;
                 updateRelease(chunk, fileName)
                     .then(() => {
                         callback()

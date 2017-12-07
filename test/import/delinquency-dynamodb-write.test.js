@@ -1,9 +1,8 @@
 process.env.TABLE_NAME = 'dcss-local-test';
 process.env.AWS_REGION = 'us-west-1';
 
-const AWS = require('aws-sdk');
 const fs = require('fs');
-const attr = require('dynamodb-data-types').AttributeValue;
+
 const jsonTransform = require("../../src/import/delinquency-json-transform");
 const encryptTransform = require("../../src/import/delinquency-encrypt-transform");
 const dynamodbWriter = require("../../src/import/delinquency-dynamodb-write");
@@ -33,13 +32,12 @@ test('write to dynamodb with encryption', (done) => {
         .pipe(dynamodbWriter.writer(fileName))
         .on('finish', () => {
             util.get('1').then((data) => {
-                validate(data.Item);
+                validate(data);
                 done();
             });
         });
 
     let validate = (data) => {
-        data = attr.unwrap(data);
         console.log(data);
         expect(data.id).toBe("1");
         expect(data.participant.firstName).not.toBe("JOHN");
