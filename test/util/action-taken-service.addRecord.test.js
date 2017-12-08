@@ -20,7 +20,7 @@ test('add new record - match on SSN', (done) => {
         agencyFirstName: "Johnny",
         agencyLastName: "Seed",
         action: "DLQ",
-        actionDate: "2017-11-20"
+        actionTakenDate: "2017-11-20"
     };
     actionTaken.addRecord(json)
         .then((data)=>{
@@ -44,7 +44,7 @@ test('add new record - match on stateId', (done) => {
         agencyFirstName: "Johnny",
         agencyLastName: "Seed",
         action: "DLQ",
-        actionDate: "2017-11-20"
+        actionTakenDate: "2017-11-20"
     };
     actionTaken.addRecord(json)
         .then((data)=>{
@@ -69,7 +69,7 @@ test('add new record - no match', (done) => {
         agencyFirstName: "Johnny",
         agencyLastName: "Seed",
         action: "DLQ",
-        actionDate: "2017-11-20"
+        actionTakenDate: "2017-11-20"
     };
     actionTaken.addRecord(json)
         .then((data)=>{

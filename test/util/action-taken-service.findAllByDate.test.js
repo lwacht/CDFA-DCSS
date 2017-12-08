@@ -13,7 +13,7 @@ let dateString = new Date().toISOString().slice(0, 10);
 beforeAll(() => {
     return util.load('test/import/delinquency-import-test-1.txt')
         .then(() => {
-            return actionTakenUtil.deleteByDate(dateString);
+            return actionTakenUtil.deleteByMonthYear(new Date().toISOString().slice(0, 7));
         })
         .then(() => {
             return actionTakenUtil.addData(dateString, '111220001', 'Seed');
@@ -46,6 +46,21 @@ test('find all participants by date', () => {
             expect(firstOne.cipherKey).not.toBeDefined();
             expect(firstOne.participantId).toBeDefined();
             expect(firstOne.participant.firstName).toBeDefined();
+        });
+});
+
+test('find all participants by month year', () => {
+
+    let monthYear = new Date().toISOString().slice(0, 7);
+
+    return actionTaken
+        .findAllParticipantsByMonthYear(monthYear)
+        .then((data) => {
+            console.log(data);
+            expect(data.length).toBe(1);
+            let firstOne = data[0];
+            expect(firstOne.participantId).toBeDefined();
+            expect(firstOne.actionTakenMonthYear).toBe(monthYear);
         });
 });
 

@@ -27,6 +27,7 @@ module.exports = {
     create: function (jsonData) {
         return encryptUtil.encrypt(jsonData, NOT_ENCRYPTED)
             .then((encryptedData) => {
+                encryptedData.actionTakenMonthYear = encryptedData.actionTakenDate.slice(0,7);
                 let params = {
                     Item: attr.wrap(encryptedData),
                     TableName: process.env.ACTION_TABLE_NAME
@@ -107,6 +108,35 @@ module.exports = {
     },
 
     /**
+     * Searches for all records given a month year
+     *
+     * @param actionTakenDate
+     */
+    findAllByMonthYear: function (actionTakenMonthYear) {
+        let params = {
+            ExpressionAttributeValues: {
+                ":at": {
+                    S: actionTakenMonthYear
+                }
+            },
+            IndexName: "actionTakenMonthYear-index",
+            KeyConditionExpression: "actionTakenMonthYear = :at",
+            Select: "ALL_ATTRIBUTES",
+            TableName: process.env.ACTION_TABLE_NAME
+        };
+
+        return dynamodb.query(params).promise().then((result) => {
+            let resultArray = [];
+            for (let i = 0; i < result.Items.length; i++) {
+                let unwrapped = attr.unwrap(result.Items[i]);
+                let decrypted = encryptUtil.decrypt(unwrapped, NOT_ENCRYPTED);
+                resultArray.push(decrypted);
+            }
+            return Promise.all(resultArray);
+        });
+    },
+
+    /**
      * Searches for all records given a date that also contain a participantId. This function will also attach
      * all participant data to the returned object.
      */
@@ -147,6 +177,38 @@ module.exports = {
                     combinedResults.push(combinedRecord);
                 }
                 return Promise.all(combinedResults);
+            });
+
+    },
+
+    /**
+     * Searches for all records given a month/year that also contain a participantId.
+     */
+    findAllParticipantsByMonthYear: function (actionTakenMonthYear) {
+        let params = {
+            ExpressionAttributeValues: {
+                ":at": {
+                    S: actionTakenMonthYear
+                }
+            },
+            IndexName: "actionTakenMonthYear-index",
+            KeyConditionExpression: "actionTakenMonthYear = :at",
+            Select: "ALL_ATTRIBUTES",
+            TableName: process.env.ACTION_TABLE_NAME
+        };
+
+        return dynamodb.query(params).promise()
+            .then((result) => {
+                let resultArray = [];
+                for (let i = 0; i < result.Items.length; i++) {
+                    if(result.Items[i].participantId) {
+                        let unwrapped = attr.unwrap(result.Items[i]);
+                        resultArray.push(unwrapped);
+                    }
+                }
+                return new Promise((resolve) => {
+                    resolve(resultArray);
+                });
             });
 
     }

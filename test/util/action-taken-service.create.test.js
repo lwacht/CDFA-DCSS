@@ -25,6 +25,7 @@ test('create new record', (done) => {
             expect(data.agencyCustomerId).toBe("1234");
             expect(data.action).toBe("DLQ");
             expect(data.actionTakenDate).toBe("2017-11-20");
+            expect(data.actionTakenMonthYear).toBe("2017-11");
             expect(data.agencyFirstName).toBeDefined();
             expect(data.agencyFirstName).not.toBe("Johnny");
             expect(data.agencyLastName).toBeDefined();

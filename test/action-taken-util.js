@@ -91,6 +91,19 @@ module.exports = {
         });
     },
 
+    /**
+     * Deletes all rows in the table by the month year given
+     */
+    deleteByMonthYear: function (actionTakenMonthYear) {
+        return actionTakenService.findAllByMonthYear(actionTakenMonthYear).then((result) => {
+            let deletes = [];
+            for (i = 0; i < result.length; i++) {
+                deletes.push(this.deleteItem(result[i].agencyCustomerId, result[i].timestamp));
+            }
+            return Promise.all(deletes);
+        });
+    },
+
     deleteItem: function (id, timestamp) {
         let params = {
             Key: {
