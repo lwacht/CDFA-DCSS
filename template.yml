@@ -7,6 +7,12 @@ Parameters:
     Type: String
   AwsUsGov:
     Type: String
+  SftpHost:
+    Type: String
+  SftpUser:
+    Type: String
+  SftpPassword:
+    Type: String
 
 Resources:
 
@@ -217,6 +223,12 @@ Resources:
       Runtime: nodejs6.10
       Code: ./
       Role: !GetAtt OutgoingSftpFunctionRole.Arn
+      Environment:
+        Variables:
+          SFTP_HOST: !Sub ${SftpHost}
+          SFTP_PORT: 22
+          SFTP_USER: !Sub ${SftpUser}
+          SFTP_PASSWORD: !Sub ${SftpPassword}
 
   OutgoingSftpFunctionS3Permission:
       Type: AWS::Lambda::Permission
