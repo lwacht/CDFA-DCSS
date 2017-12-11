@@ -161,6 +161,7 @@ Resources:
           ACTION_TABLE_NAME: !Ref ActionTakenTable
           HASH_KEY: !Sub ${HashKey}
           KEY_ALIAS: !Sub alias/dcss-${Environment}-key
+          EXPORT_BUCKET_NAME: !Sub dcss-${Environment}-action-taken-export-bucket
 
   ActionTakenFunctionEventPermission:
     Type: AWS::Lambda::Permission
@@ -195,6 +196,7 @@ Resources:
           ACTION_TABLE_NAME: !Ref ActionTakenTable
           HASH_KEY: !Sub ${HashKey}
           KEY_ALIAS: !Sub alias/dcss-${Environment}-key
+          EXPORT_BUCKET_NAME: !Sub dcss-${Environment}-action-taken-export-bucket
 
   ActionTakenStatsFunctionEventPermission:
     Type: AWS::Lambda::Permission
