@@ -24,8 +24,22 @@ module.exports = {
                 delete record.participant.ssnHash;
                 delete record.participant.stateIdHash;
                 addUpdateItem(record, fileName)
-                    .then(() => {
-                        callback();
+                    .then((result) => {
+                        if (result.Attributes
+                            && result.Attributes.delinquent
+                            && result.Attributes.delinquent.BOOL === false) {
+                            updateRepeatOffender(chunk.id).then(() => {
+                                callback();
+                            });
+                        } else if (result.Attributes
+                            && result.Attributes.repeatOffender
+                            && result.Attributes.repeatOffender.BOOL === true) {
+                            updateRepeatOffender(chunk.id).then(() => {
+                                callback();
+                            });
+                        } else {
+                            callback();
+                        }
                     })
                     .catch((err) => {
                         console.log(err);
@@ -49,7 +63,8 @@ function addUpdateItem(item, fileName) {
             "#D": "delinquent",
             "#SH": "ssnHash",
             "#IH": "stateIdHash",
-            "#DFD": "delinquencyFileDate"
+            "#DFD": "delinquencyFileDate",
+            "#RO": "repeatOffender"
         },
         ExpressionAttributeValues: {
             ":p": {
@@ -58,14 +73,15 @@ function addUpdateItem(item, fileName) {
             ":d": item.delinquent,
             ":sh": item.ssnHash,
             ":ih": item.stateIdHash,
+            ":ro": {BOOL: false},
             ":dfd": {
                 SS: [parseDateString(fileName)]
             }
         },
         Key: {"id": id},
-        ReturnValues: "ALL_NEW",
+        ReturnValues: "UPDATED_OLD",
         TableName: TABLE_NAME,
-        UpdateExpression: "SET #D = :d, #P = :p, #SH = :sh, #IH = :ih ADD #DFD :dfd"
+        UpdateExpression: "SET #D = :d, #P = :p, #SH = :sh, #IH = :ih, #RO = :ro ADD #DFD :dfd"
     };
     return dynamodb.updateItem(params).promise();
 
@@ -78,4 +94,25 @@ function addUpdateItem(item, fileName) {
         let underscores = name.split("_");
         return underscores[underscores.length - 1].split(".")[0];
     }
+}
+
+/**
+ * Updates the item to repeatOffender = true.
+ *
+ * Returns a promise.
+ */
+function updateRepeatOffender(id) {
+    let params = {
+        ExpressionAttributeNames: {
+            "#RO": "repeatOffender"
+        },
+        ExpressionAttributeValues: {
+            ":ro": {BOOL: true}
+        },
+        Key: {"id": {S: id}},
+        ReturnValues: "UPDATED_OLD",
+        TableName: TABLE_NAME,
+        UpdateExpression: "SET #RO = :ro"
+    };
+    return dynamodb.updateItem(params).promise();
 }

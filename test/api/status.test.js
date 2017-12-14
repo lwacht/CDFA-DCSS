@@ -8,7 +8,10 @@ const handler = require('../../src/api/status').handler;
 const util = require('../util');
 
 beforeAll(() => {
-    return util.load('test/import/delinquency-import-test-1.txt');
+    return util.delete('1')
+        .then(() => {
+            return util.load('test/import/delinquency-import-test-1.txt');
+        });
 });
 
 test('status api end to end test -- found ssn', () => {
@@ -27,6 +30,7 @@ test('status api end to end test -- found ssn', () => {
             let body = JSON.parse(result.body);
             expect(body.found).toBe(true);
             expect(body.delinquent).toBe(true);
+            expect(body.repeatOffender).toBe(false);
         });
 });
 
@@ -46,6 +50,7 @@ test('status api end to end test -- found stateId', () => {
             let body = JSON.parse(result.body);
             expect(body.found).toBe(true);
             expect(body.delinquent).toBe(true);
+            expect(body.repeatOffender).toBe(false);
         });
 });
 
@@ -65,6 +70,7 @@ test('status api end to end test -- not found', () => {
             let body = JSON.parse(result.body);
             expect(body.found).toBe(false);
             expect(body.delinquent).toBe(false);
+            expect(body.repeatOffender).toBe(false);
         });
 });
 

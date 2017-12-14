@@ -32,7 +32,8 @@ exports.handler = (event, context, callback) => {
             if (data !== null) {
                 let result = {
                     found: true,
-                    delinquent: data.delinquent
+                    delinquent: data.delinquent,
+                    repeatOffender: data.repeatOffender
                 };
                 callback(null, createResponse(200, JSON.stringify(result)));
             } else {
@@ -40,13 +41,15 @@ exports.handler = (event, context, callback) => {
                     if (data !== null) {
                         let result = {
                             found: true,
-                            delinquent: data.delinquent
+                            delinquent: data.delinquent,
+                            repeatOffender: data.repeatOffender
                         };
                         callback(null, createResponse(200, JSON.stringify(result)));
                     } else {
                         let result = {
                             found: false,
-                            delinquent: false
+                            delinquent: false,
+                            repeatOffender: false
                         };
                         callback(null, createResponse(200, JSON.stringify(result)));
                     }

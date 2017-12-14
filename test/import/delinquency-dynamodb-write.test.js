@@ -12,38 +12,44 @@ const fileName = 'SLM_Delinquency_20171108.txt';
 const hashKey = 'TESTING';
 
 beforeEach(() => {
-    return util.delete('1').then(() => {
-        return util.insert({
-            id: "1",
-            participant: {
-                firstName: 'JOHNNY'
-            },
-            delinquent: false,
-            delinquencyFileDate: ['20171008']
+    return util.delete('1')
+        .then(() => {
+            return util.delete('2');
+        })
+        .then(() => {
+            return util.delete('3');
         });
-    });
 });
 
-test('write to dynamodb with encryption', (done) => {
+test('write to dynamodb with encryption', () => {
 
-    let stats = {count:0};
+    let stats = {count: 0};
 
-    fs.createReadStream("test/import/delinquency-import-test-3.txt")
-        .pipe(jsonTransform.transform())
-        .pipe(encryptTransform.transform('alias/dcss-dev', hashKey))
-        .pipe(dynamodbWriter.writer(fileName, stats))
-        .on('finish', () => {
-            util.get('1').then((data) => {
-                validate(data);
-                done();
-            });
+    return util.insert({
+        id: "1",
+        participant: {
+            firstName: 'JOHNNY'
+        },
+        delinquent: true,
+        delinquencyFileDate: ['20171008']
+    }).then(() => {
+        return new Promise((resolve, reject) => {
+            fs.createReadStream("test/import/delinquency-import-test-3.txt")
+                .pipe(jsonTransform.transform())
+                .pipe(encryptTransform.transform('alias/dcss-dev', hashKey))
+                .pipe(dynamodbWriter.writer(fileName, stats))
+                .on('finish', () => {
+                    resolve();
+                });
         });
-
-    let validate = (data) => {
+    }).then(() => {
+        return util.get('1');
+    }).then((data) => {
         console.log(data);
         expect(data.id).toBe("1");
         expect(data.participant.firstName).not.toBe("JOHN");
         expect(data.delinquent).toBe(true);
+        expect(data.repeatOffender).toBe(false);
         expect(data.delinquencyFileDate).toContain('20171008');
         expect(data.delinquencyFileDate).toContain('20171108');
         //hashed values
@@ -51,7 +57,69 @@ test('write to dynamodb with encryption', (done) => {
         expect(data.stateIdHash).toBeDefined();
 
         expect(stats.count).toBe(3);
-    };
+    });
+});
+
+test('repeat offender', () => {
+
+    let stats = {count: 0};
+
+    return util.insert({
+        id: "1",
+        participant: {
+            firstName: 'JOHNNY'
+        },
+        delinquent: false,
+        repeatOffender: true,
+        delinquencyFileDate: ['20171008']
+    }).then(() => {
+        return new Promise((resolve, reject) => {
+            fs.createReadStream("test/import/delinquency-import-test-3.txt")
+                .pipe(jsonTransform.transform())
+                .pipe(encryptTransform.transform('alias/dcss-dev', hashKey))
+                .pipe(dynamodbWriter.writer(fileName, stats))
+                .on('finish', () => {
+                    resolve();
+                });
+        });
+    }).then(() => {
+        return util.get('1');
+    }).then((data) => {
+        console.log(data);
+        expect(data.id).toBe("1");
+        expect(data.repeatOffender).toBe(true);
+    });
+});
+
+test('past repeat offender', () => {
+
+    let stats = {count: 0};
+
+    return util.insert({
+        id: "1",
+        participant: {
+            firstName: 'JOHNNY'
+        },
+        delinquent: true,
+        repeatOffender: true,
+        delinquencyFileDate: ['20171008']
+    }).then(() => {
+        return new Promise((resolve, reject) => {
+            fs.createReadStream("test/import/delinquency-import-test-3.txt")
+                .pipe(jsonTransform.transform())
+                .pipe(encryptTransform.transform('alias/dcss-dev', hashKey))
+                .pipe(dynamodbWriter.writer(fileName, stats))
+                .on('finish', () => {
+                    resolve();
+                });
+        });
+    }).then(() => {
+        return util.get('1');
+    }).then((data) => {
+        console.log(data);
+        expect(data.id).toBe("1");
+        expect(data.repeatOffender).toBe(true);
+    });
 });
 
 
