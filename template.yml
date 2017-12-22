@@ -473,7 +473,7 @@ Resources:
               Action:
                 - sts:AssumeRole
         ManagedPolicyArns:
-          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-lambda-logs-policy
           - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
           - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-put-policy
           - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-update-policy
@@ -493,7 +493,7 @@ Resources:
               Action:
                 - sts:AssumeRole
         ManagedPolicyArns:
-          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-lambda-logs-policy
           - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
           - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-delete-policy
           - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-update-policy
@@ -514,7 +514,7 @@ Resources:
               Action:
                 - sts:AssumeRole
         ManagedPolicyArns:
-          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-lambda-logs-policy
           - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
           - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-delete-policy
           - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-update-policy
@@ -534,7 +534,7 @@ Resources:
               Action:
                 - sts:AssumeRole
         ManagedPolicyArns:
-          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+          - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-lambda-logs-policy
           - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-read-policy
 
   ActionTakenFunctionRole:
@@ -552,7 +552,7 @@ Resources:
                 Action:
                   - sts:AssumeRole
           ManagedPolicyArns:
-            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-lambda-logs-policy
             - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-update-policy
 
   ActionTakenExportFunctionRole:
@@ -570,7 +570,7 @@ Resources:
                 Action:
                   - sts:AssumeRole
           ManagedPolicyArns:
-            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-lambda-logs-policy
             - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-read-policy
             - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
             - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-put-policy
@@ -590,7 +590,7 @@ Resources:
                 Action:
                   - sts:AssumeRole
           ManagedPolicyArns:
-            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-lambda-logs-policy
             - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-dynamo-read-policy
             - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
             - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-put-policy
@@ -610,7 +610,7 @@ Resources:
                 Action:
                   - sts:AssumeRole
           ManagedPolicyArns:
-            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-lambda-logs-policy
+            - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-lambda-logs-policy
             - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-read-policy
             - !Sub arn:${AwsUsGov}:iam::${AWS::AccountId}:policy/dcss-${Environment}-s3-delete-policy
 
