@@ -3,6 +3,26 @@
 The serverless application connects the CDFA Cannabis Licensing System to DCSS. This README intends to provide 
 instructions to setup a developer machine to run unit tests and deploy the application to AWS. 
 
+# Source code structure
+The following describes the source code organizational structure and naming conventions used for this project.
+  * __src__ -- All the source code for this project is stored within this directory.
+    * __api__ -- The source code for the APIs is located here.
+      * __status__ -- The Lambda and supporting libraries for the status API will have *status* in the name.
+      * __action-taken__ -- The Lambda and supporting libraries for the action taken API will have *action-taken* in the name.
+    * __export__ -- The source code for the export (to DCSS) functionality is located here.
+      * __action-taken__ -- The Lambda and supporting libraries for the action taken export will have *action-taken* in the name.
+      * __action-taken-stats__ -- The Lambda and supporting libraries for the action taken statistics export will have *action-taken-stats* in the name.
+      * __outgoing-sftp__ -- The Lambda and supporting libraries for exporting the flat files to the DCSS sftp server will have *outgoing-sftp* in the name.
+    * __import__ -- The source code for the import (from DCSS) functionality is located here.
+      * __delinquency__ -- The Lambda and supporting libraries for the monthly delinquency import will have *delinquency* in the name.
+      * __daily-release__ -- The Lambda and supporting libraries for the daily release import will have *daily-release* in the name. 
+    * __util__ -- This directory contains reusable libraries that are shared across functional areas.
+  * __test__ -- This directory contains all unit and integration tests for the source code. 
+  The test naming convention will follow the source code followed by `.test.js` for example `src/util/encrypt.js` has a 
+  corresponding test located at `test/util/encrypt.test.js`. Test resources are also stored along side the test files. 
+  For example some delinquency import files are stored at `test/import/delinquency-import-test-1.txt`. The test resources 
+  will end in the `.txt` suffix.
+
 ## Prerequisites
 
   * Install GitHub App or favorite git client (<https://desktop.github.com/>)
