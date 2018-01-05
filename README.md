@@ -3,7 +3,7 @@
 The serverless application connects the CDFA Cannabis Licensing System to DCSS. This README intends to provide 
 instructions to setup a developer machine to run unit tests and deploy the application to AWS. 
 
-# Source code structure
+## Source code structure
 The following describes the source code organizational structure and naming conventions used for this project.
   * __src__ -- All the source code for this project is stored within this directory.
     * __api__ -- The source code for the APIs is located here.
