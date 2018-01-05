@@ -1,6 +1,6 @@
-process.env.ACTION_TABLE_NAME = 'dcss-local-test-action-taken';
+process.env.ACTION_TABLE_NAME = 'dcss-local-test-action-taken-table';
 process.env.KEY_ALIAS = 'alias/dcss-local-test-key';
-process.env.TABLE_NAME = 'dcss-local-test';
+process.env.TABLE_NAME = 'dcss-local-test-dcss-table';
 process.env.HASH_KEY = 'TESTING';
 process.env.AWS_REGION = 'us-west-1';
 

@@ -24,7 +24,7 @@ test('kms', (done) => {
     //     KeySpec: "AES_256"// Specifies the type of data key to return.
     // };
     let params = {
-        KeyId: "alias/dcss-dev", // The identifier of the CMK to use to encrypt the data key. You can use the key ID or Amazon Resource Name (ARN) of the CMK, or the name or ARN of an alias that refers to the CMK.
+        KeyId: "alias/dcss-local-test-key", // The identifier of the CMK to use to encrypt the data key. You can use the key ID or Amazon Resource Name (ARN) of the CMK, or the name or ARN of an alias that refers to the CMK.
         KeySpec: "AES_256"// Specifies the type of data key to return.
     };
     kms.generateDataKey(params, function(err, data) {

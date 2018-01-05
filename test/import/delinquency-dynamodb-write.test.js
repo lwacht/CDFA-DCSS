@@ -1,4 +1,4 @@
-process.env.TABLE_NAME = 'dcss-local-test';
+process.env.TABLE_NAME = 'dcss-local-test-dcss-table';
 process.env.AWS_REGION = 'us-west-1';
 
 const fs = require('fs');
@@ -36,7 +36,7 @@ test('write to dynamodb with encryption', () => {
         return new Promise((resolve, reject) => {
             fs.createReadStream("test/import/delinquency-import-test-3.txt")
                 .pipe(jsonTransform.transform())
-                .pipe(encryptTransform.transform('alias/dcss-dev', hashKey))
+                .pipe(encryptTransform.transform('alias/dcss-local-test-key', hashKey))
                 .pipe(dynamodbWriter.writer(fileName, stats))
                 .on('finish', () => {
                     resolve();
@@ -76,7 +76,7 @@ test('repeat offender', () => {
         return new Promise((resolve, reject) => {
             fs.createReadStream("test/import/delinquency-import-test-3.txt")
                 .pipe(jsonTransform.transform())
-                .pipe(encryptTransform.transform('alias/dcss-dev', hashKey))
+                .pipe(encryptTransform.transform('alias/dcss-local-test-key', hashKey))
                 .pipe(dynamodbWriter.writer(fileName, stats))
                 .on('finish', () => {
                     resolve();
@@ -107,7 +107,7 @@ test('past repeat offender', () => {
         return new Promise((resolve, reject) => {
             fs.createReadStream("test/import/delinquency-import-test-3.txt")
                 .pipe(jsonTransform.transform())
-                .pipe(encryptTransform.transform('alias/dcss-dev', hashKey))
+                .pipe(encryptTransform.transform('alias/dcss-local-test-key', hashKey))
                 .pipe(dynamodbWriter.writer(fileName, stats))
                 .on('finish', () => {
                     resolve();

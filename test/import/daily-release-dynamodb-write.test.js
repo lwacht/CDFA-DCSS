@@ -1,4 +1,4 @@
-process.env.TABLE_NAME = 'dcss-local-test';
+process.env.TABLE_NAME = 'dcss-local-test-dcss-table';
 process.env.AWS_REGION = 'us-west-1';
 
 const fs = require('fs');

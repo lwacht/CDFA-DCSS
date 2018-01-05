@@ -1,6 +1,6 @@
-process.env.TABLE_NAME = 'dcss-local-test';
+process.env.TABLE_NAME = 'dcss-local-test-dcss-table';
 process.env.HASH_KEY = 'TESTING';
-process.env.KEY_ALIAS = 'alias/dcss-dev';
+process.env.KEY_ALIAS = 'alias/dcss-local-test-key';
 process.env.AWS_REGION = 'us-west-1';
 
 const search = require('../../src/util/search');

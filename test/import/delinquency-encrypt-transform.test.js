@@ -1,4 +1,4 @@
-process.env.KEY_ALIAS = 'alias/dcss-dev';
+process.env.KEY_ALIAS = 'alias/dcss-local-test-key';
 process.env.AWS_REGION = 'us-west-1';
 
 const fs = require('fs');
